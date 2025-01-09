@@ -52,7 +52,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          npx wrangler pages deploy --project-name "${{ secrets.CF_PROJECT_NAME }}"
+          npx wrangler pages deploy --project-name "${{ secrets.CF_PROJECT_NAME }}" .vercel/output/static
 
       - name: Deploy ${{ steps.extract_branch.outputs.branch_name }} (PR)
         if: ${{ steps.extract_branch.outputs.branch_name != '' }}
