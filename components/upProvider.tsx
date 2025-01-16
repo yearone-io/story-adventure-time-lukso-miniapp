@@ -1,11 +1,27 @@
-"use client";
+/**
+ * @component UpProvider
+ * @description Context provider that manages Universal Profile (UP) wallet connections and state
+ * for LUKSO blockchain interactions on Grid. It handles wallet connection status, account management, and chain
+ * information while providing real-time updates through event listeners.
+ *
+ * @provides {UpProviderContext} Context containing:
+ * - provider: UP-specific wallet provider instance
+ * - client: Viem wallet client for blockchain interactions
+ * - chainId: Current blockchain network ID
+ * - accounts: Array of connected wallet addresses
+ * - contextAccounts: Array of Universal Profile accounts
+ * - walletConnected: Boolean indicating active wallet connection
+ * - selectedAddress: Currently selected address for transactions
+ * - isSearching: Loading state indicator
+ */
+'use client';
 
 import { createClientUPProvider } from "@lukso/up-provider";
 import { createWalletClient, custom } from "viem";
 import { luksoTestnet } from "viem/chains";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-interface GridProviderContext {
+interface UpProviderContext {
   provider: any;
   client: any;
   chainId: number;
@@ -18,21 +34,21 @@ interface GridProviderContext {
   setIsSearching: (isSearching: boolean) => void;
 }
 
-const GridContext = createContext<GridProviderContext | undefined>(undefined);
+const UpContext = createContext<UpProviderContext | undefined>(undefined);
 
-export function useGrid() {
-  const context = useContext(GridContext);
+export function useUpProvider() {
+  const context = useContext(UpContext);
   if (!context) {
-    throw new Error("useGrid must be used within a GridProvider");
+    throw new Error("useUpProvider must be used within a UpProvider");
   }
   return context;
 }
 
-interface GridProviderProps {
+  interface UpProviderProps {
   children: ReactNode;
 }
 
-export function GridProvider({ children }: GridProviderProps) {
+export function UpProvider({ children }: UpProviderProps) {
   const [provider] = useState(() =>
     typeof window !== "undefined" ? createClientUPProvider() : null
   );
@@ -106,19 +122,8 @@ export function GridProvider({ children }: GridProviderProps) {
     }
   }, [client, provider, accounts.length, contextAccounts.length]);
 
-  const content = !walletConnected ? (
-    <div className="text-center p-8 bg-black/20 backdrop-blur-sm rounded-xl border border-white/10 shadow-2xl animate-fade-in">
-      <h2 className="text-2xl font-semibold mb-3 text-white">Welcome to Grid App</h2>
-      <p className="text-gray-400">Please connect your Universal Profile to continue.</p>
-    </div>
-  ) : (
-    <div className="relative w-full max-w-sm animate-slide-up">
-      {children}
-    </div>
-  );
-
   return (
-    <GridContext.Provider
+    <UpContext.Provider
       value={{
         provider,
         client,
@@ -132,20 +137,11 @@ export function GridProvider({ children }: GridProviderProps) {
         setIsSearching,
       }}
     >
-      <div className="min-h-screen w-full bg-gradient-to-b from-black to-gray-900">
-        <div className="relative min-h-screen w-full max-w-screen-xl mx-auto p-6 flex flex-col items-center justify-center overflow-hidden">
-          {/* Background Animation */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-          </div>
-          
-          {/* Content */}
-          <div className="relative z-10">
-            {content}
-          </div>
+      <div className="bg-gradient-to-b from-black to-gray-900 min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md p-8">
+          {children}
         </div>
       </div>
-    </GridContext.Provider>
+    </UpContext.Provider>
   );
 } 

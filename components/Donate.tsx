@@ -1,12 +1,29 @@
-"use client";
+/**
+ * A component that facilitates LYX token transfers to a specified LUKSO address.
+ * 
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} [props.selectedAddress] - Optional hex address of the donation recipient.
+ *                                          If not provided, uses the first address from context.
+ * 
+ * Features:
+ * - Amount validation (${minAmount}-${maxAmount} LYX)
+ * - Integration with UP Browser wallet
+ * - Recipient profile display using LuksoProfile
+ * - Real-time amount validation
+ * 
+ * @requires useUpProvider - Hook for UP Browser wallet integration
+ * @requires LuksoProfile - Component for displaying LUKSO profile information
+ * @requires viem - For handling blockchain transactions
+ */
+'use client';
 
-import { useCallback, useEffect, useState } from "react";
-import { parseUnits } from "viem";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useGrid } from "./GridProvider";
+import { useCallback, useEffect, useState } from 'react';
+import { parseUnits } from 'viem';
+import { useUpProvider } from './upProvider';
+import { LuksoProfile } from './LuksoProfile';
 
-const minAmount = 0.25;
+const minAmount = 1.0;
 const maxAmount = 1000;
 
 interface DonateProps {
@@ -14,9 +31,11 @@ interface DonateProps {
 }
 
 export function Donate({ selectedAddress }: DonateProps) {
-  const { client, accounts, contextAccounts, walletConnected, setIsSearching } = useGrid();
+  const { client, accounts, contextAccounts, walletConnected, setIsSearching } =
+    useUpProvider();
   const [amount, setAmount] = useState<number>(minAmount);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
+  const recipientAddress = selectedAddress || contextAccounts[0];
 
   const validateAmount = useCallback((value: number) => {
     if (value < minAmount) {
@@ -24,7 +43,7 @@ export function Donate({ selectedAddress }: DonateProps) {
     } else if (value > maxAmount) {
       setError(`Amount cannot exceed ${maxAmount} LYX.`);
     } else {
-      setError("");
+      setError('');
     }
     setAmount(value);
   }, []);
@@ -32,8 +51,6 @@ export function Donate({ selectedAddress }: DonateProps) {
   useEffect(() => {
     validateAmount(amount);
   }, [amount, validateAmount]);
-
-  const recipientAddress = selectedAddress || contextAccounts[0];
 
   const sendToken = async () => {
     if (!client || !walletConnected || !amount) return;
@@ -44,70 +61,66 @@ export function Donate({ selectedAddress }: DonateProps) {
     });
   };
 
+  const handleOnInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = Number.parseFloat(e.target.value);
+      validateAmount(value);
+    },
+    [validateAmount]
+  );
+
   return (
-    <div className="w-full max-w-xl mx-auto p-6 md:p-8 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg">
+    <div className="w-full max-w-xl mx-auto p-6 md:p-8 bg-white/80 backdrop-blur-md rounded-2xl shadow-lg">
       {/* Header Section */}
-      <div className="flex flex-col space-y-4 mb-8">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Donate LYX</h2>
-          <button
+          <h2 className="text-l md:text-xl font-bold text-gray-900">
+            Donate LYX
+          </h2>
+          <lukso-button
             onClick={() => setIsSearching(true)}
-            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors font-medium"
+            variant="secondary"
+            size="medium"
+            isFullWidth={true}
           >
             Change Address
-          </button>
+          </lukso-button>
         </div>
-        
+
         {/* Recipient Address Display */}
         {recipientAddress && (
-          <div className="bg-gray-50 rounded-xl p-4">
-            <div className="text-sm text-gray-500 mb-2">Recipient Address</div>
-            <code className="block text-sm font-mono text-gray-700 break-all">
-              {recipientAddress}
-            </code>
-          </div>
-        )}
-      </div>
-
-      {/* Amount Input Section */}
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-            Amount (LYX)
-          </label>
-          <div className="relative">
-            <Input
-              id="amount"
-              type="number"
-              value={amount}
-              onChange={(e) => {
-                const value = Number.parseFloat(e.target.value);
-                validateAmount(value);
-              }}
-              min={minAmount}
-              max={maxAmount}
-              step="0.25"
-              className="block w-full px-4 py-3 text-lg rounded-xl border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={!walletConnected}
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              LYX
+          <div className="bg-gray-20 rounded-xl p-4">
+            <div className="flex flex-col items-center">
+              <LuksoProfile address={recipientAddress} />
             </div>
           </div>
-          {error && (
-            <p className="text-sm text-red-500 mt-1">{error}</p>
-          )}
+        )}
+
+      {/* Amount Input and Donate Button Section */}
+      <div className="flex gap-4 items-start">
+        <div className="flex-1">
+          <lukso-input
+            label="Amount (LYX)"
+            value={minAmount.toString()}
+            type="number"
+            min={minAmount}
+            max={maxAmount}
+            onInput={handleOnInput}
+            is-full-width
+            is-disabled={!walletConnected}
+          ></lukso-input>
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
 
-        {/* Donate Button */}
-        <Button
+        <lukso-button
           onClick={sendToken}
-          disabled={!walletConnected || !amount || !recipientAddress}
-          className="w-full py-4 text-lg font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all disabled:from-gray-200 disabled:to-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed"
+          variant="primary"
+          size="medium"
+          className="mt-6" 
+          is-disabled={!walletConnected}
         >
-          {walletConnected ? `Donate ${amount} LYX` : 'Connect Wallet to Donate'}
-        </Button>
+          {walletConnected ? `Donate ${amount} LYX` : 'Connect UP'}
+        </lukso-button>
       </div>
     </div>
   );
-} 
+}
