@@ -36,9 +36,9 @@ export function LuksoProfile({ address }: LuksoProfileProps) {
         isLoading: boolean;
     }>({
         imgUrl: 'https://tools-web-components.pages.dev/images/sample-avatar.jpg',
-        fullName: '',
-        background: '',
-        profileAddress: '',
+        fullName: 'username',
+        background: 'https://tools-web-components.pages.dev/images/sample-background.jpg',
+        profileAddress: '0x12345',
         isLoading: false,
     });
 
@@ -91,10 +91,12 @@ export function LuksoProfile({ address }: LuksoProfileProps) {
             variant="profile"
             background-url={profileData.background}
             profile-url={profileData.imgUrl}
-            shadow="medium"
-            className="w-full"
+            shadow="small"
+            border-radius="small"
+            width={280}
+            height={200}
         >
-            <div slot="content" className="p-3 flex flex-col items-center">
+            <div slot="content" className="flex flex-col items-center">
                 {!profileData.isLoading && (
                     <lukso-username
                         name={profileData.fullName}
@@ -102,6 +104,7 @@ export function LuksoProfile({ address }: LuksoProfileProps) {
                         size="large"
                         max-width="200"
                         prefix="@"
+                        class="mb-4"
                     ></lukso-username>
                 )}
             </div>
