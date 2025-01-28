@@ -1,6 +1,6 @@
-# Grid Mini-App Template
+# Mini-App next.js template
 
-A template project demonstrating how to build mini-apps interacting with Universal Profiles on Universal Everything, using the [up-provider package](https://github.com/lukso-network/tools-up-provider).
+A template project demonstrating how to build mini-apps using the [up-provider package](https://github.com/lukso-network/tools-up-provider) and interacting with Universal Profiles on [Universal Everything](https://universaleverything.io), built with [next.js](https://nextjs.org).
 
 ## Overview
 
