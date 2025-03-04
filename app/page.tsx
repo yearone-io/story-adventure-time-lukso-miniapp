@@ -1,10 +1,9 @@
 "use client";
 
 import { UpProvider } from "@/components/upProvider";
-import { Donate } from "@/components/Donate";
-import { ProfileSearch } from "@/components/ProfileSearch";
 import { useUpProvider } from "@/components/upProvider";
 import { useState, useEffect } from "react";
+import StoryAdventure from "@/components/StoryAdventure";
 
 // Import the LUKSO web-components library
 let promise: Promise<unknown> | null = null;
@@ -30,20 +29,24 @@ function MainContent() {
     });
   }, []);
 
-  const { selectedAddress, setSelectedAddress, isSearching } = useUpProvider();
+  const { selectedAddress, setSelectedAddress, isSearching, walletConnected } = useUpProvider();
 
   if (!mounted) {
     return null; // or a loading placeholder
   }
 
+  // if(!walletConnected) {
+  //   return (
+  //     <div>
+  //       <p>Connect your wallet to start the story adventure!</p>
+  //     </div>
+  //   );
+  // }
+
   return (
     <>
-      <div className={`${isSearching ? "hidden" : "block"}`}>
-        <Donate selectedAddress={selectedAddress} />
-      </div>
-
-      <div className={`${!isSearching ? "hidden" : "block"}`}>
-        <ProfileSearch onSelectAddress={setSelectedAddress} />
+      <div>
+        <StoryAdventure />
       </div>
     </>
   );

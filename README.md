@@ -66,6 +66,15 @@ lt --port <LOCALHOST_PORT>
 
 You can use this URL to add the mini-app to the Grid. 
 
+## Smart contracts
+
+```
+npx hardhat deployContracts \
+  --network luksoTestnet \
+  --names "StoryAdventure" \
+  --paths "contracts"
+```
+
 ## Project Structure
 
 - `components/upProvider.tsx`: Core UP Provider implementation and wallet connection logic
