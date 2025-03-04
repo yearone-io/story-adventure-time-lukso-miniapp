@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUpProvider } from "@/components/upProvider";
-import { getContract, PublicClient } from "viem";
+import { getContract, PublicClient, WalletClient } from "viem";
 
 // This would be your LLM API service
 import { generateStoryOptions } from '../services/llm-service';
@@ -8,18 +8,19 @@ import { generateStoryOptions } from '../services/llm-service';
 // Import ABI of your deployed contract
 import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
 import { supportedNetworks } from "@/config/networks";
-import { WalletClient } from "viem/clients/createWalletClient";
 const StoryAdventureABI = StoryAdventureABIFile.abi;
 
+type StoryPrompt = { prompt: string, timestamp: number, selected: boolean };
+
 const StoryAdventure = () => {
-  const { client, publicClient, accounts, contextAccounts, walletConnected, provider, chain } =
+  const { client, publicClient, contextAccounts, walletConnected, chain } =
     useUpProvider();
 
   const account = contextAccounts[0];
 
   const [loading, setLoading] = useState(false);
-  const [storyHistory, setStoryHistory] = useState([]);
-  const [currentOptions, setCurrentOptions] = useState([]);
+  const [storyHistory, setStoryHistory] = useState<StoryPrompt[]>([]);
+  const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [initialPromptInput, setInitialPromptInput] = useState('');
   const [storyStarted, setStoryStarted] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
@@ -78,7 +79,7 @@ const StoryAdventure = () => {
           abi: StoryAdventureABI,
           functionName: 'getStoryHistory',
           account
-        });
+        }) as StoryPrompt[];
 
         // Convert from contract format to component format
         const formattedStoryHistory = storyData.map(item => ({
@@ -151,7 +152,7 @@ const StoryAdventure = () => {
     }
   };
 
-  const selectStoryOption = async (optionText) => {
+  const selectStoryOption = async (optionText: string) => {
     if (!client || !account) return;
 
     try {

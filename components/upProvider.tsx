@@ -24,7 +24,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 interface UpProviderContext {
   provider: UPClientProvider | null;
   client: WalletClient | null;
-  publicClient: PublicClient | null;
+  publicClient: PublicClient;
   chain: Chain;
   chainId: number;
   accounts: Array<`0x${string}`>;

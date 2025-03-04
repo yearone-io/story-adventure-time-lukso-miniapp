@@ -1,7 +1,6 @@
 "use client";
 
 import { UpProvider } from "@/components/upProvider";
-import { useUpProvider } from "@/components/upProvider";
 import { useState, useEffect } from "react";
 import StoryAdventure from "@/components/StoryAdventure";
 
@@ -29,19 +28,9 @@ function MainContent() {
     });
   }, []);
 
-  const { selectedAddress, setSelectedAddress, isSearching, walletConnected } = useUpProvider();
-
   if (!mounted) {
     return null; // or a loading placeholder
   }
-
-  // if(!walletConnected) {
-  //   return (
-  //     <div>
-  //       <p>Connect your wallet to start the story adventure!</p>
-  //     </div>
-  //   );
-  // }
 
   return (
     <>

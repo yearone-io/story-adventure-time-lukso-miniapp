@@ -1,7 +1,6 @@
 
 export async function POST(
   request: Request,
-  { params }: { params: { profileAddress: string } },
 ) {
   try {
     try {
