@@ -33,7 +33,7 @@ export default {
       };
 
       // Call Llama 3 to generate continuations
-      const response = await env.AI.run('@cf/meta/llama-3-8b-instant', chat);
+      const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', chat);
 
       // Parse the response to extract the three options
       const options = parseOptionsFromResponse(response);
@@ -50,7 +50,7 @@ export default {
       console.error('Error generating story options:', error);
       return Response.json(
         {
-          error: 'Failed to generate story options',
+          error: 'Failed to generate story options: '+ error,
           options: [
             "You encounter a mysterious stranger who offers to guide you.",
             "A sudden change in weather forces you to seek shelter.",
