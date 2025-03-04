@@ -213,13 +213,6 @@ const StoryAdventure = () => {
 
   return (
     <div className="story-adventure-container">
-      {!account || !walletConnected ? (
-        <div className="connect-prompt">
-          <p>Connect your Universal Profile to start or continue your adventure</p>
-          {/* Assuming you have a connect wallet component */}
-          {/*<ConnectWallet />*/}
-        </div>
-      ) : (
         <>
           {!storyStarted ? (
             <div className="new-story-section">
@@ -260,7 +253,6 @@ const StoryAdventure = () => {
             </>
           )}
         </>
-      )}
     </div>
   );
 };
