@@ -19,26 +19,32 @@ export default {
           {
             role: 'system',
             content: `You are a creative storytelling assistant. Your task is to generate three distinct, 
-            engaging continuations for an interactive story. Each option should be 2-3 sentences long and 
-            offer a unique direction for the story. Label each option with "OPTION 1:", "OPTION 2:", and 
-            "OPTION 3:" at the beginning.`
+            engaging continuations for an interactive story. Each option MUST be no longer than 100 characters and 
+            offer a unique direction for the story. 
+            Label each option with "OPTION 1:", "OPTION 2:", and "OPTION 3:" at the beginning.`
           },
           {
             role: 'user',
             content: `Here's the story so far:\n\n${storySoFar}\n\nGenerate three unique and creative 
-            continuations for this story. Make them interesting and different from each other.`
+            continuations for this story. Make them interesting and different from each other. 
+            IMPORTANT: Each continuation must be 100 characters or less.`
           }
         ]
       };
 
       // Call Llama 3 to generate continuations
-      const response = await env.AI.run('@cf/meta/llama-3-8b-instruct', chat);
+      const response = await env.AI.run('@cf/meta/llama-3-8b-instant', chat);
 
       // Parse the response to extract the three options
       const options = parseOptionsFromResponse(response);
 
+      // Ensure each option is within the character limit
+      const trimmedOptions = options.map(option =>
+        option.length > 100 ? option.substring(0, 97) + '...' : option
+      );
+
       // Return the options as JSON
-      return Response.json({ options });
+      return Response.json({ options: trimmedOptions });
 
     } catch (error) {
       console.error('Error generating story options:', error);
@@ -48,7 +54,7 @@ export default {
           options: [
             "You encounter a mysterious stranger who offers to guide you.",
             "A sudden change in weather forces you to seek shelter.",
-            "You discover an unusual object that seems important to your journey."
+            "You discover an unusual object that seems important."
           ]
         },
         { status: 500 }
@@ -83,10 +89,10 @@ function parseOptionsFromResponse(response) {
     return parts.slice(0, 3);
   }
 
-  // If all parsing fails, return default options
+  // If all parsing fails, return default options (now shortened to 100 chars or less)
   return [
-    "As you continue your journey, you come across a hidden path leading deeper into the unknown.",
-    "A strange character approaches you with an intriguing proposition that could change everything.",
-    "The atmosphere shifts around you, revealing something that was previously concealed from view."
+    "A hidden path leads deeper into the unknown.",
+    "A strange character approaches with an intriguing proposition.",
+    "The atmosphere shifts, revealing something previously concealed."
   ];
 }
