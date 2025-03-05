@@ -24,6 +24,7 @@ const StoryAdventure = () => {
   const [initialPromptInput, setInitialPromptInput] = useState('');
   const [storyStarted, setStoryStarted] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
+  const [optionSelectionLoading, setOptionSelectionLoading] = useState(false);
   const network = supportedNetworks[chain?.id];
   const CONTRACT_ADDRESS = network.contractAddress;
 
@@ -40,7 +41,7 @@ const StoryAdventure = () => {
   };
 
   useEffect(() => {
-      loadStoryHistory();
+    loadStoryHistory();
   }, [account, publicClient]);
 
   // Generate new options whenever story history changes
@@ -154,6 +155,7 @@ const StoryAdventure = () => {
 
     try {
       setTransactionPending(true);
+      setOptionSelectionLoading(true);
 
       // Call contract to add a new story prompt
       const hash = await client.writeContract({
@@ -178,9 +180,11 @@ const StoryAdventure = () => {
       setStoryHistory([...storyHistory, newStoryPrompt]);
       setCurrentOptions([]);
       setTransactionPending(false);
+      setOptionSelectionLoading(false);
     } catch (error) {
       console.error('Error selecting story option:', error);
       setTransactionPending(false);
+      setOptionSelectionLoading(false);
     }
   };
 
@@ -215,6 +219,15 @@ const StoryAdventure = () => {
 
   // Render story options with enhanced styling
   const renderStoryOptions = () => {
+    if (optionSelectionLoading) {
+      return (
+        <div className="col-span-3 flex flex-col items-center justify-center space-y-4 py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+          <p className="text-white/80 text-lg animate-pulse">Recording your choice on the blockchain...</p>
+        </div>
+      );
+    }
+
     return currentOptions.map((option, index) => (
       <div
         key={index}
@@ -244,27 +257,8 @@ const StoryAdventure = () => {
     ));
   };
 
-  return (
-    <div
-      className="
-        min-h-screen bg-gradient-to-br from-gray-900 to-purple-900
-        flex flex-col items-center justify-center
-        p-4 md:p-8 lg:p-12
-      "
-    >
-      <div
-        className="
-          w-full max-w-4xl
-          bg-gray-800/60 backdrop-blur-md
-          rounded-2xl shadow-2xl
-          p-6 md:p-10
-        "
-      >
-        {!storyStarted ? (
+  return !storyStarted ? (
           <div className="text-center space-y-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Craft Your Epic Journey
-            </h1>
             <p className="text-white/70 mb-6">
               Begin your story with an imaginative opening scene
             </p>
@@ -300,9 +294,6 @@ const StoryAdventure = () => {
         ) : (
           <div className="space-y-8">
             <div className="story-history-section">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
-                Your Journey So Far
-              </h2>
               <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
                 {renderStoryHistory()}
               </div>
@@ -312,7 +303,7 @@ const StoryAdventure = () => {
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
                 What Happens Next?
               </h2>
-              {loading ? (
+              {loading && !optionSelectionLoading ? (
                 <div className="flex justify-center items-center">
                   <p className="text-white/70 animate-pulse">
                     The story unfolds...
@@ -325,9 +316,6 @@ const StoryAdventure = () => {
               )}
             </div>
           </div>
-        )}
-      </div>
-    </div>
   );
 };
 

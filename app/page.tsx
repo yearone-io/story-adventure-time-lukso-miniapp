@@ -1,7 +1,7 @@
 "use client";
 
 import { UpProvider } from "@/components/upProvider";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import StoryAdventure from "@/components/StoryAdventure";
 
 // Import the LUKSO web-components library
@@ -34,8 +34,33 @@ function MainContent() {
 
   return (
     <>
-      <div>
-        <StoryAdventure />
+      <div
+        className="
+        min-h-screen bg-gradient-to-br from-gray-900 to-purple-900
+        flex flex-col items-center justify-center
+        p-4 md:p-8 lg:p-12
+      "
+      >
+        <div
+          className="
+          w-full max-w-4xl
+          bg-gray-800/60 backdrop-blur-md
+          rounded-2xl shadow-2xl
+          p-6 md:p-10
+        "
+        >
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <img
+              src="/universal-story.png"
+              alt="Universal Story Logo"
+              className="h-8 md:h-10 object-contain"
+            />
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
+              Universal Story
+            </h2>
+          </div>
+          <StoryAdventure />
+        </div>
       </div>
     </>
   );
