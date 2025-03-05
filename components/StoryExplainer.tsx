@@ -5,22 +5,6 @@ import React, { useEffect, useState } from "react";
 const StoryExplainer = () => {
   const [tooltipVisible, setTooltipVisible] = useState(false);
 
-  useEffect(() => {
-    if (tooltipVisible) {
-      const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target as HTMLElement;
-        if (!target.closest('.tooltip-container')) {
-          setTooltipVisible(false);
-        }
-      };
-
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [tooltipVisible]);
-
   return (
     <div className="tooltip-container relative z-10">
       <button
@@ -74,7 +58,12 @@ const StoryExplainer = () => {
             </li>
           </ul>
           <div className="mt-3 pt-2 border-t border-purple-500/30 text-xs text-white/70">
-            Click anywhere outside this box to close
+            <button
+              onClick={() => setTooltipVisible(false)}
+              aria-label="How it works"
+            >
+              (x) Close
+            </button>
           </div>
         </div>
       )}

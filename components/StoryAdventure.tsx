@@ -10,12 +10,13 @@ import { generateStoryOptions } from '../services/llm-service';
 // Import ABI of your deployed contract
 import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
 import { supportedNetworks } from "@/config/networks";
+import ConnectWalletExplainer from "@/components/ConnectWalletExplainer";
 const StoryAdventureABI = StoryAdventureABIFile.abi;
 
 type StoryPrompt = { prompt: string, timestamp: number, selected: boolean };
 
 const StoryAdventure = () => {
-  const { client, publicClient, contextAccounts, chain } =
+  const { client, publicClient, contextAccounts, chain, walletConnected } =
     useUpProvider();
 
   const account = contextAccounts[0];
@@ -27,6 +28,7 @@ const StoryAdventure = () => {
   const [storyStarted, setStoryStarted] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
   const [optionSelectionLoading, setOptionSelectionLoading] = useState(false);
+  const [showConnectWalletTooltip, setShowConnectWalletTooltip] = useState(false);
   const network = supportedNetworks[chain?.id];
   const CONTRACT_ADDRESS = network.contractAddress;
 
@@ -154,6 +156,12 @@ const StoryAdventure = () => {
 
   const selectStoryOption = async (optionText: string) => {
     if (!client || !account) return;
+
+    if(!walletConnected) {
+      //prompt to connect
+      setShowConnectWalletTooltip(true);
+      return;
+    }
 
     try {
       setTransactionPending(true);
@@ -307,6 +315,7 @@ const StoryAdventure = () => {
           </div>
         ) : (
           <div className="space-y-8">
+            {showConnectWalletTooltip && <ConnectWalletExplainer onClose={() => setShowConnectWalletTooltip(false)} />}
             <div className="story-history-section">
               <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
                 {renderStoryHistory()}
