@@ -16,10 +16,11 @@ const StoryAdventureABI = StoryAdventureABIFile.abi;
 type StoryPrompt = { prompt: string, timestamp: number, selected: boolean };
 
 const StoryAdventure = () => {
-  const { client, publicClient, contextAccounts, chain, walletConnected } =
+  const { client, publicClient, accounts, contextAccounts, chain, walletConnected } =
     useUpProvider();
 
-  const account = contextAccounts[0];
+  const profileAddress = contextAccounts[0];
+  const connectedAddress = accounts.length ? accounts[0] : null;
 
   const [loading, setLoading] = useState(false);
   const [storyHistory, setStoryHistory] = useState<StoryPrompt[]>([]);
@@ -32,6 +33,28 @@ const StoryAdventure = () => {
   const network = supportedNetworks[chain?.id];
   const CONTRACT_ADDRESS = network.contractAddress;
 
+  const mysteriousOpenings = [
+    "The note on the door simply read: 'Don’t turn around.'",
+    "A single candle flickered in the abandoned house, though no one had lived there for years.",
+    "She woke up in an unfamiliar room, with no memory of how she got there.",
+    "The clock struck midnight, and the phone began to ring—a call from someone who had died a year ago.",
+    "Footsteps echoed behind me in the empty alley, but when I turned, no one was there.",
+    "The old photograph had changed—someone new was standing in the background.",
+    "I found a diary under my floorboards, and it was written in my handwriting… but I had never seen it before.",
+    "Every night, at exactly 3:13 AM, the door to my closet creaks open.",
+    "The letter was signed with my name, but I had never written it.",
+    "A shadow moved across the window, but I was on the 12th floor.",
+    "There was a new grave in the cemetery… with today’s date on the headstone.",
+    "He had been gone for five years, yet he walked into the café as if nothing had happened.",
+    "A stranger on the train whispered, ‘They’re coming for you tonight.’",
+    "The whispers in the attic grew louder every night, though I lived alone.",
+    "She had seen her own reflection blink at her.",
+    "The town had vanished from the map overnight, as if it had never existed.",
+    "I received a text from my sister, but she had disappeared a decade ago.",
+    "The radio turned on by itself, playing a song that hadn’t been released yet.",
+    "As I blew out my birthday candles, someone whispered, ‘Make your last wish count.’",
+    "The painting in the hallway had changed—now the woman’s eyes were looking directly at me."
+  ];
 
   // Create contract instance when client is available
   const getStoryContract = (client: WalletClient | PublicClient) => {
@@ -46,7 +69,7 @@ const StoryAdventure = () => {
 
   useEffect(() => {
     loadStoryHistory();
-  }, [account, publicClient]);
+  }, [profileAddress, publicClient]);
 
   // Generate new options whenever story history changes
   useEffect(() => {
@@ -71,7 +94,7 @@ const StoryAdventure = () => {
         address: CONTRACT_ADDRESS,
         abi: StoryAdventureABI,
         functionName: 'hasStory',
-        account
+        account: profileAddress
       });
 
       if (hasStory) {
@@ -80,7 +103,7 @@ const StoryAdventure = () => {
           address: CONTRACT_ADDRESS,
           abi: StoryAdventureABI,
           functionName: 'getStoryHistory',
-          account
+          account: profileAddress
         }) as StoryPrompt[];
 
         // Convert from contract format to component format
@@ -120,7 +143,7 @@ const StoryAdventure = () => {
   };
 
   const startNewStory = async () => {
-    if (!initialPromptInput.trim() || !client || !account || !publicClient) return;
+    if (!initialPromptInput.trim() || !client || !profileAddress || !publicClient) return;
 
     try {
       setTransactionPending(true);
@@ -131,7 +154,7 @@ const StoryAdventure = () => {
         abi: StoryAdventureABI,
         functionName: "startNewStory",
         args: [initialPromptInput.trim()],
-        account,
+        account: connectedAddress,
         chain: chain
       });
 
@@ -155,7 +178,7 @@ const StoryAdventure = () => {
   };
 
   const selectStoryOption = async (optionText: string) => {
-    if (!client || !account) return;
+    if (!client || !profileAddress) return;
 
     if(!walletConnected) {
       //prompt to connect
@@ -172,8 +195,8 @@ const StoryAdventure = () => {
         address: CONTRACT_ADDRESS,
         abi: StoryAdventureABI,
         functionName: "addStoryPrompt",
-        args: [optionText, account],
-        account,
+        args: [optionText, profileAddress],
+        account: connectedAddress,
         chain: chain
       });
 
@@ -267,7 +290,7 @@ const StoryAdventure = () => {
     ));
   };
 
-  if(!account) {
+  if(!profileAddress) {
     //return an error message, as this can only be used in a Lukso mini app
     return (
       <div className="text-center space-y-6">
@@ -279,6 +302,17 @@ const StoryAdventure = () => {
     );
   };
 
+  if(!storyStarted && profileAddress.toLowerCase() !== connectedAddress?.toLowerCase()) {
+    return (
+      <div className="text-center space-y-6">
+        <p className="text-white/70 mb-6">
+          Only the profile owner start the story. If you're the owner of this profile, please connect your wallet.
+          If you're a visitor, please come back later once the story has been set by the owner.
+        </p>
+      </div>
+    );
+  }
+
   return !storyStarted ? (
           <div className="text-center space-y-6">
             <p className="text-white/70 mb-6">
@@ -287,7 +321,7 @@ const StoryAdventure = () => {
             <textarea
               value={initialPromptInput}
               onChange={(e) => setInitialPromptInput(e.target.value)}
-              placeholder="It was a dark and stormy night when..."
+              placeholder={mysteriousOpenings[Math.floor(Math.random() * mysteriousOpenings.length)]}
               rows={4}
               className="
                 w-full bg-gray-700/50 text-white
