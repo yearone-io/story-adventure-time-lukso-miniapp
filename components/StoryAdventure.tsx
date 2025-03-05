@@ -257,6 +257,18 @@ const StoryAdventure = () => {
     ));
   };
 
+  if(!account) {
+    //return an error message, as this can only be used in a Lukso mini app
+    return (
+      <div className="text-center space-y-6">
+        <p className="text-white/70 mb-6">
+          This feature can only be used in a Lukso mini app.
+          Get started by adding this URL to your Univeral Profile grid.
+        </p>
+      </div>
+    );
+  };
+
   return !storyStarted ? (
           <div className="text-center space-y-6">
             <p className="text-white/70 mb-6">
@@ -276,7 +288,7 @@ const StoryAdventure = () => {
                 transition-all duration-300
               "
             />
-            <lukso-button
+            <button
               onClick={startNewStory}
               disabled={!initialPromptInput.trim() || transactionPending}
               className="
@@ -289,7 +301,7 @@ const StoryAdventure = () => {
               "
             >
               {transactionPending ? 'Saving Your Tale...' : 'Begin Adventure'}
-            </lukso-button>
+            </button>
           </div>
         ) : (
           <div className="space-y-8">
