@@ -306,8 +306,8 @@ const StoryAdventure = () => {
     return (
       <div className="text-center space-y-6">
         <p className="text-white/70 mb-6">
-          Only the profile owner start the story. If you're the owner of this profile, please connect your wallet.
-          If you're a visitor, please come back later once the story has been set by the owner.
+          Only the profile owner start the story. If you&apos;re the owner of this profile, please connect your wallet.
+          If you&apos;re a visitor, please come back later once the story has been set by the owner.
         </p>
       </div>
     );
