@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { useUpProvider } from "@/components/upProvider";
 import { getContract, PublicClient, WalletClient } from "viem";

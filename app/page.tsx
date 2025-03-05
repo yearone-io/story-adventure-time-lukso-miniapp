@@ -3,6 +3,7 @@
 import { UpProvider } from "@/components/upProvider";
 import React, { useState, useEffect } from "react";
 import StoryAdventure from "@/components/StoryAdventure";
+import StoryExplainer from "@/components/StoryExplainer";
 
 // Import the LUKSO web-components library
 let promise: Promise<unknown> | null = null;
@@ -58,6 +59,7 @@ function MainContent() {
             <h2 className="text-2xl md:text-3xl font-bold text-white">
               Universal Story
             </h2>
+            <StoryExplainer />
           </div>
           <StoryAdventure />
         </div>
