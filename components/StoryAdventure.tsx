@@ -172,7 +172,7 @@ const StoryAdventure = () => {
         address: CONTRACT_ADDRESS,
         abi: StoryAdventureABI,
         functionName: "addStoryPrompt",
-        args: [optionText],
+        args: [optionText, account],
         account,
         chain: chain
       });

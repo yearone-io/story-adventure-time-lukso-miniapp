@@ -70,9 +70,12 @@ contract StoryAdventure {
     /**
      * @dev Add a new prompt to the story
      * @param promptText The next part of the story
+     * @param userAddress The address of the user whose story to add to
      */
-    function addStoryPrompt(string calldata promptText) external onlyStoryOwner {
+    function addStoryPrompt(string calldata promptText, address userAddress) external {
         require(bytes(promptText).length > 0, "Empty prompt");
+        require(bytes(promptText).length <= 150, "Prompt too long, max 150 characters");
+        require(userStories[userAddress].exists, "User doesn't have a story");
 
         StoryPrompt memory newPrompt = StoryPrompt({
             prompt: promptText,
@@ -80,9 +83,9 @@ contract StoryAdventure {
             selected: true
         });
 
-        userStories[msg.sender].storyLines.push(newPrompt);
+        userStories[userAddress].storyLines.push(newPrompt);
 
-        emit PromptAdded(msg.sender, promptText);
+        emit PromptAdded(userAddress, promptText);
     }
 
     /**
