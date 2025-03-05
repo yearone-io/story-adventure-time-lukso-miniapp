@@ -190,69 +190,146 @@ const StoryAdventure = () => {
   // Render story history
   const renderStoryHistory = () => {
     return storyHistory.map((item, index) => (
-      <div key={index} className="story-segment">
-        <p className="story-text">{item.prompt}</p>
-        {index < storyHistory.length - 1 && <div className="story-connector">→</div>}
+      <div
+        key={index}
+        className={`
+          relative p-4 bg-white/10 rounded-lg shadow-md 
+          transform transition-all duration-300 hover:scale-[1.02]
+          ${index === storyHistory.length - 1 ? 'border-2 border-purple-500' : ''}
+        `}
+      >
+        <p className="text-white/90 italic text-base">{item.prompt}</p>
+        {index < storyHistory.length - 1 && (
+          <div className="absolute top-1/2 right-[-30px] transform -translate-y-1/2 rotate-90">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-purple-400 animate-pulse"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </div>
+        )}
       </div>
     ));
   };
 
-  // Render story options
+  // Render story options with enhanced styling
   const renderStoryOptions = () => {
     return currentOptions.map((option, index) => (
-      <div key={index} className="option-card">
-        <lukso-button
+      <div
+        key={index}
+        className="
+          transform transition-all duration-300
+          hover:scale-105 hover:shadow-lg
+          bg-gradient-to-br from-purple-600/20 to-blue-600/20
+          rounded-xl p-1
+        "
+      >
+        <button
           onClick={() => selectStoryOption(option)}
           disabled={transactionPending}
+          className="
+            w-full h-full
+            bg-gray-900/80 text-white
+            rounded-lg p-3
+            hover:bg-gradient-to-r
+            hover:from-purple-700 hover:to-blue-700
+            transition-all duration-300
+            disabled:opacity-50 disabled:cursor-not-allowed
+          "
         >
           {option}
-        </lukso-button>
+        </button>
       </div>
     ));
   };
 
   return (
-    <div className="story-adventure-container">
-        <>
-          {!storyStarted ? (
-            <div className="new-story-section">
-              <p>Create the opening scene for your story</p>
-              <textarea
-                value={initialPromptInput}
-                onChange={(e) => setInitialPromptInput(e.target.value)}
-                placeholder="It was a dark and stormy night when..."
-                rows={4}
-                className="prompt-input"
-              />
-              <lukso-button
-                onClick={startNewStory}
-                disabled={!initialPromptInput.trim() || transactionPending}
-              >
-                {transactionPending ? 'Saving...' : 'Begin Adventure'}
-              </lukso-button>
+    <div
+      className="
+        min-h-screen bg-gradient-to-br from-gray-900 to-purple-900
+        flex flex-col items-center justify-center
+        p-4 md:p-8 lg:p-12
+      "
+    >
+      <div
+        className="
+          w-full max-w-4xl
+          bg-gray-800/60 backdrop-blur-md
+          rounded-2xl shadow-2xl
+          p-6 md:p-10
+        "
+      >
+        {!storyStarted ? (
+          <div className="text-center space-y-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              Craft Your Epic Journey
+            </h1>
+            <p className="text-white/70 mb-6">
+              Begin your story with an imaginative opening scene
+            </p>
+            <textarea
+              value={initialPromptInput}
+              onChange={(e) => setInitialPromptInput(e.target.value)}
+              placeholder="It was a dark and stormy night when..."
+              rows={4}
+              className="
+                w-full bg-gray-700/50 text-white
+                rounded-xl p-4
+                border-2 border-transparent
+                focus:border-purple-500
+                focus:outline-none
+                transition-all duration-300
+              "
+            />
+            <lukso-button
+              onClick={startNewStory}
+              disabled={!initialPromptInput.trim() || transactionPending}
+              className="
+                bg-gradient-to-r from-purple-600 to-blue-600
+                text-white font-bold py-3 px-6
+                rounded-full
+                hover:from-purple-700 hover:to-blue-700
+                transition-all duration-300
+                disabled:opacity-50 disabled:cursor-not-allowed
+              "
+            >
+              {transactionPending ? 'Saving Your Tale...' : 'Begin Adventure'}
+            </lukso-button>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <div className="story-history-section">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
+                Your Journey So Far
+              </h2>
+              <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+                {renderStoryHistory()}
+              </div>
             </div>
-          ) : (
-            <>
-              <div className="story-history-section">
-                <h2>Your Journey So Far</h2>
-                <div className="story-timeline">
-                  {renderStoryHistory()}
-                </div>
-              </div>
 
-              <div className="story-options-section">
-                <h2>What happens next?</h2>
-                {loading ? (
-                  <p>The story unfolds...</p>
-                ) : (
-                  <div className="options-grid">
-                    {renderStoryOptions()}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </>
+            <div className="story-options-section mt-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
+                What Happens Next?
+              </h2>
+              {loading ? (
+                <div className="flex justify-center items-center">
+                  <p className="text-white/70 animate-pulse">
+                    The story unfolds...
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {renderStoryOptions()}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
