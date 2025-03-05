@@ -13,7 +13,7 @@ const StoryAdventureABI = StoryAdventureABIFile.abi;
 type StoryPrompt = { prompt: string, timestamp: number, selected: boolean };
 
 const StoryAdventure = () => {
-  const { client, publicClient, contextAccounts, walletConnected, chain } =
+  const { client, publicClient, contextAccounts, chain } =
     useUpProvider();
 
   const account = contextAccounts[0];
@@ -39,12 +39,9 @@ const StoryAdventure = () => {
     });
   };
 
-  // Load story history when account is connected
   useEffect(() => {
-    if (account && client && walletConnected) {
       loadStoryHistory();
-    }
-  }, [account, client, walletConnected]);
+  }, [account, publicClient]);
 
   // Generate new options whenever story history changes
   useEffect(() => {
