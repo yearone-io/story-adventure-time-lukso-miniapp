@@ -57,14 +57,21 @@ const StoryExplainer = () => {
               <span>Your story can be continued any time from where you left off.</span>
             </li>
           </ul>
-          <div className="mt-3 pt-2 border-t border-purple-500/30 text-xs text-white/70">
-            <button
-              onClick={() => setTooltipVisible(false)}
-              aria-label="How it works"
-            >
-              (x) Close
-            </button>
-          </div>
+          <button
+            onClick={function() {
+              setTooltipVisible(false);
+            }}
+            className="
+            mt-2
+            w-20 h-10
+            bg-purple-600 text-white
+            rounded-full
+            flex items-center justify-center
+          "
+            aria-label="Close"
+          >
+            (x) Close
+          </button>
         </div>
       )}
     </div>
