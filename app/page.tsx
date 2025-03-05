@@ -54,9 +54,9 @@ function MainContent() {
             <img
               src="/universal-story.png"
               alt="Universal Story Logo"
-              className="h-8 md:h-10 object-contain"
+              className="h-12 md:h-10 object-contain"
             />
-            <h2 className="text-2xl md:text-3xl font-bold text-white">
+            <h2 className="text-xl md:text-2xl font-bold text-white">
               Universal Story
             </h2>
             <StoryExplainer />
