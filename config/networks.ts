@@ -10,6 +10,6 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
   },
   4201: {
     name: 'LUKSO Testnet',
-    contractAddress: "0x576Ad4c43abA88cF52B299D1D572E5096082Fc6D"
+    contractAddress: "0xB2110C80c4958a2AD74137De379bD62Caec9ABe4"
   },
 };

@@ -38,7 +38,7 @@ const StoryExplainer = () => {
           <ul className="space-y-2 text-sm">
             <li className="flex items-start">
               <span className="text-purple-400 mr-2">•</span>
-              <span>You first set a base for a story based on your imagination.</span>
+              <span>You first set a base for a story from your imagination.</span>
             </li>
             <li className="flex items-start">
               <span className="text-purple-400 mr-2">•</span>
