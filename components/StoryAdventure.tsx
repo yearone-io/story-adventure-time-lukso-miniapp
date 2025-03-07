@@ -2,21 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUpProvider } from "@/components/upProvider";
-import { getContract, PublicClient, WalletClient } from "viem";
+import { getContract } from "viem";
 
 // This would be your LLM API service
 import { generateStoryOptions } from '../services/llm-service';
 
 // Import ABI of your deployed contract
 import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
-import { supportedNetworks } from "@/config/networks";
 import ConnectWalletExplainer from "@/components/ConnectWalletExplainer";
+import { supportedNetworks } from "@/config/networks";
+import SwitchNetworkExplainer from "@/components/SwitchNetworkExplainer";
 const StoryAdventureABI = StoryAdventureABIFile.abi;
 
 type StoryPrompt = { prompt: string, timestamp: number, selected: boolean };
 
 const StoryAdventure = () => {
-  const { client, publicClient, accounts, contextAccounts, chain, walletConnected } =
+  const { client, publicClient, accounts, contextAccounts, walletConnected, chainId, profileChainId } =
     useUpProvider();
 
   const profileAddress = contextAccounts[0];
@@ -30,7 +31,8 @@ const StoryAdventure = () => {
   const [transactionPending, setTransactionPending] = useState(false);
   const [optionSelectionLoading, setOptionSelectionLoading] = useState(false);
   const [showConnectWalletTooltip, setShowConnectWalletTooltip] = useState(false);
-  const network = supportedNetworks[chain?.id];
+  const [showSwitchNetworkTooltip, setShowSwitchNetworkTooltip] = useState(false);
+  const network = supportedNetworks[profileChainId];
   const CONTRACT_ADDRESS = network.contractAddress;
 
   const mysteriousOpenings = [
@@ -57,13 +59,13 @@ const StoryAdventure = () => {
   ];
 
   // Create contract instance when client is available
-  const getStoryContract = (client: WalletClient | PublicClient) => {
+  const getStoryContract = () => {
     if (!client || !CONTRACT_ADDRESS) return null;
 
     return getContract({
       address: CONTRACT_ADDRESS,
       abi: StoryAdventureABI,
-      client: client,
+      client: publicClient,
     });
   };
 
@@ -82,7 +84,7 @@ const StoryAdventure = () => {
     try {
       setLoading(true);
 
-      const contract = getStoryContract(publicClient);
+      const contract = getStoryContract();
       if (!contract) {
         console.error('Contract not available');
         setLoading(false);
@@ -155,7 +157,7 @@ const StoryAdventure = () => {
         functionName: "startNewStory",
         args: [initialPromptInput.trim()],
         account: connectedAddress,
-        chain: chain
+        chain: client.chain
       });
 
       await publicClient.waitForTransactionReceipt({ hash });
@@ -186,6 +188,13 @@ const StoryAdventure = () => {
       return;
     }
 
+    if(chainId !== profileChainId) {
+      console.log("Mismatch in chainId", chainId, profileChainId);
+      setShowSwitchNetworkTooltip(true);
+      //prompt to switch to the correct network
+      return;
+    }
+
     try {
       setTransactionPending(true);
       setOptionSelectionLoading(true);
@@ -197,7 +206,7 @@ const StoryAdventure = () => {
         functionName: "addStoryPrompt",
         args: [optionText, profileAddress],
         account: connectedAddress,
-        chain: chain
+        chain: client.chain
       });
 
       await publicClient.waitForTransactionReceipt({ hash });
@@ -350,6 +359,7 @@ const StoryAdventure = () => {
         ) : (
           <div className="space-y-8">
             {showConnectWalletTooltip && <ConnectWalletExplainer onClose={() => setShowConnectWalletTooltip(false)} />}
+            {showSwitchNetworkTooltip && <SwitchNetworkExplainer connectedNetwork={chainId} profileNetwork={profileChainId} onClose={() => setShowSwitchNetworkTooltip(false)} />}
             <div className="story-history-section">
               <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
                 {renderStoryHistory()}

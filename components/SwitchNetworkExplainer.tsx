@@ -1,6 +1,18 @@
+import { supportedNetworks } from "@/config/networks";
+
 const ConnectWalletExplainer = (
-  { onClose }: { onClose: () => void }
+  {
+    onClose,
+    profileNetwork,
+    connectedNetwork
+  }: {
+    profileNetwork: number;
+    connectedNetwork: number;
+    onClose: () => void
+  }
 ) => {
+  const profileNetworkName = supportedNetworks[connectedNetwork]!.name;
+  const connectedNetworkName = supportedNetworks[profileNetwork]!.name;
 
   return (
       <div className="
@@ -13,11 +25,11 @@ const ConnectWalletExplainer = (
             text-white/90
             z-20
           ">
-        <h3 className="text-lg font-semibold text-purple-300 mb-2">Connect wallet to participate</h3>
+        <h3 className="text-lg font-semibold text-purple-300 mb-2">Switch networks</h3>
         <ul className="space-y-2 text-sm">
           <li className="flex items-start">
             <span className="text-purple-400 mr-2">•</span>
-            <span>Please connect your wallet to this mini app to take part in evolving this story.</span>
+            <span>Your extension is connected to {connectedNetworkName}, but you're viewing a {profileNetworkName}. Please connect to the correct network and reload the page to proceed.</span>
           </li>
         </ul>
         <button

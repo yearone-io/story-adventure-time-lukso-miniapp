@@ -14,19 +14,29 @@
  * - selectedAddress: Currently selected address for transactions
  * - isSearching: Loading state indicator
  */
-'use client';
+"use client";
 
-import { createClientUPProvider, UPClientProvider } from "@lukso/up-provider";
-import { createPublicClient, createWalletClient, custom, http, PublicClient, WalletClient, Chain } from "viem";
+import {
+  createClientUPProvider,
+  type UPClientProvider,
+} from "@lukso/up-provider";
+import { createPublicClient, createWalletClient, custom, http } from "viem";
 import { lukso, luksoTestnet } from "viem/chains";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+  useMemo,
+} from "react";
 
 interface UpProviderContext {
   provider: UPClientProvider | null;
-  client: WalletClient | null;
-  publicClient: PublicClient;
-  chain: Chain;
+  client: ReturnType<typeof createWalletClient> | null;
+  publicClient: ReturnType<typeof createPublicClient>;
   chainId: number;
+  profileChainId: number;
   accounts: Array<`0x${string}`>;
   contextAccounts: Array<`0x${string}`>;
   walletConnected: boolean;
@@ -38,7 +48,8 @@ interface UpProviderContext {
 
 const UpContext = createContext<UpProviderContext | undefined>(undefined);
 
-const provider = typeof window !== "undefined" ? createClientUPProvider() : null;
+const provider =
+  typeof window !== "undefined" ? createClientUPProvider() : null;
 
 export function useUpProvider() {
   const context = useContext(UpContext);
@@ -53,28 +64,51 @@ interface UpProviderProps {
 }
 
 export function UpProvider({ children }: UpProviderProps) {
-  const [chainId, setChainId] = useState<number>(0);
+  const [chainId, setChainId] = useState<number>(4201);
+  const [profileChainId, setProfileChainId] = useState<number>(4201);
   const [accounts, setAccounts] = useState<Array<`0x${string}`>>([]);
-  const [contextAccounts, setContextAccounts] = useState<Array<`0x${string}`>>([]);
+  const [contextAccounts, setContextAccounts] = useState<Array<`0x${string}`>>(
+    []
+  );
   const [walletConnected, setWalletConnected] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<`0x${string}` | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<`0x${string}` | null>(
+    null
+  );
   const [isSearching, setIsSearching] = useState(false);
-  const [client, setClient] = useState<WalletClient | null>(null);
-  const chain = chainId === 42 ? lukso : luksoTestnet;
-  const publicClient = createPublicClient({
-    chain: chain,
-    transport: http()
+  const [account] = accounts ?? [];
+  const [contextAccount] = contextAccounts ?? [];
+  const publicTestnetClient = createPublicClient({
+    chain: luksoTestnet,
+    transport: http(),
   });
 
   useEffect(() => {
+    if(contextAccounts.length) {
+      const profileAddress = contextAccounts[0];
+      publicTestnetClient.getCode({
+        address: profileAddress,
+      }).then((code ) => {
+        setProfileChainId(code === "0x" ? 42 : 4201);
+      })
+    }
+  }, [contextAccounts]);
+
+  const client = useMemo(() => {
     if (provider && chainId) {
-      const newClient = createWalletClient({
-        chain: chain,
+      return createWalletClient({
+        chain: chainId === 42 ? lukso : luksoTestnet,
         transport: custom(provider),
       });
-      setClient(newClient);
     }
+    return null;
   }, [provider, chainId]);
+
+  const publicClient = useMemo(() => {
+    return createPublicClient({
+      chain: profileChainId === 42 ? lukso : luksoTestnet,
+      transport: http(),
+    });
+  }, [profileChainId]);
 
   useEffect(() => {
     let mounted = true;
@@ -83,18 +117,21 @@ export function UpProvider({ children }: UpProviderProps) {
       try {
         if (!client || !provider) return;
 
-        const _chainId = (await client.getChainId()) as number;
-        if (!mounted) return;
-        setChainId(_chainId);
-
-        const _accounts = (await client.getAddresses()) as Array<`0x${string}`>;
+        const _accounts = (await provider.request(
+          "eth_accounts",
+          []
+        )) as Array<`0x${string}`>;
         if (!mounted) return;
         setAccounts(_accounts);
+
+        const _chainId = parseInt((await provider.request("eth_chainId")));
+        if (!mounted) return;
+        setChainId(_chainId);
 
         const _contextAccounts = provider.contextAccounts;
         if (!mounted) return;
         setContextAccounts(_contextAccounts);
-        setWalletConnected(_accounts.length > 0 && _contextAccounts.length > 0);
+        setWalletConnected(_accounts[0] != null && _contextAccounts[0] != null);
       } catch (error) {
         console.error(error);
       }
@@ -105,15 +142,16 @@ export function UpProvider({ children }: UpProviderProps) {
     if (provider) {
       const accountsChanged = (_accounts: Array<`0x${string}`>) => {
         setAccounts(_accounts);
-        setWalletConnected(_accounts.length > 0 && contextAccounts.length > 0);
+        setWalletConnected(_accounts[0] != null && contextAccount != null);
       };
 
       const contextAccountsChanged = (_accounts: Array<`0x${string}`>) => {
         setContextAccounts(_accounts);
-        setWalletConnected(accounts.length > 0 && _accounts.length > 0);
+        setWalletConnected(account != null && _accounts[0] != null);
       };
 
       const chainChanged = (_chainId: number) => {
+        console.log(`Chain changed from ${chainId} to ${_chainId}`);
         setChainId(_chainId);
       };
 
@@ -124,32 +162,52 @@ export function UpProvider({ children }: UpProviderProps) {
       return () => {
         mounted = false;
         provider.removeListener("accountsChanged", accountsChanged);
-        provider.removeListener("contextAccountsChanged", contextAccountsChanged);
+        provider.removeListener(
+          "contextAccountsChanged",
+          contextAccountsChanged
+        );
         provider.removeListener("chainChanged", chainChanged);
       };
     }
-  }, [client, accounts.length, contextAccounts.length]);
+    // If you want to be responsive to account changes
+    // you also need to look at the first account rather
+    // then the length or the whole array. Unfortunately react doesn't properly
+    // look at array values like vue or knockout.
+  }, [client, account, contextAccount]);
 
+  // There has to be a useMemo to make sure the context object doesn't change on every
+  // render.
+  const data = useMemo(() => {
+    return {
+      provider,
+      client,
+      publicClient,
+      chainId,
+      profileChainId,
+      accounts,
+      contextAccounts,
+      walletConnected,
+      selectedAddress,
+      setSelectedAddress,
+      isSearching,
+      setIsSearching,
+    };
+  }, [
+    client,
+    publicClient,
+    chainId,
+    profileChainId,
+    accounts,
+    contextAccounts,
+    walletConnected,
+    selectedAddress,
+    isSearching,
+  ]);
   return (
-    <UpContext.Provider
-      value={{
-        provider,
-        client,
-        publicClient,
-        chain,
-        chainId,
-        accounts,
-        contextAccounts,
-        walletConnected,
-        selectedAddress,
-        setSelectedAddress,
-        isSearching,
-        setIsSearching,
-      }}
-    >
+    <UpContext.Provider value={data}>
       <div className="min-h-screen flex items-center justify-center">
         {children}
       </div>
     </UpContext.Provider>
   );
-} 
+}
