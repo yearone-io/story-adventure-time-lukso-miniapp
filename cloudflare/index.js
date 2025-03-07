@@ -21,7 +21,7 @@ export default {
             content: `You are a creative storytelling assistant. Your task is to generate three distinct, 
             engaging continuations for an interactive story. Each option MUST be no longer than 100 characters and 
             offer a unique direction for the story. 
-            Label each option with "OPTION 1:", "OPTION 2:", and "OPTION 3:" at the beginning.`
+            Label each option with "OPTION 1:", "OPTION 2:", and "OPTION 3:" at the beginning. Don't include a prefix statement, just the 3 options. IMPORTANT: Each option must be 100 characters or less.`
           },
           {
             role: 'user',
@@ -44,7 +44,7 @@ export default {
       );
 
       // Return the options as JSON
-      return Response.json({ options: trimmedOptions });
+      return Response.json({ options: options });
 
     } catch (error) {
       console.error('Error generating story options:', error);
