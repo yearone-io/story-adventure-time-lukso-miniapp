@@ -12,7 +12,6 @@
  * - contextAccounts: Array of Universal Profile accounts
  * - walletConnected: Boolean indicating active wallet connection
  * - selectedAddress: Currently selected address for transactions
- * - isSearching: Loading state indicator
  */
 "use client";
 
@@ -42,8 +41,6 @@ interface UpProviderContext {
   walletConnected: boolean;
   selectedAddress: `0x${string}` | null;
   setSelectedAddress: (address: `0x${string}` | null) => void;
-  isSearching: boolean;
-  setIsSearching: (isSearching: boolean) => void;
 }
 
 const UpContext = createContext<UpProviderContext | undefined>(undefined);
@@ -74,7 +71,6 @@ export function UpProvider({ children }: UpProviderProps) {
   const [selectedAddress, setSelectedAddress] = useState<`0x${string}` | null>(
     null
   );
-  const [isSearching, setIsSearching] = useState(false);
   const [account] = accounts ?? [];
   const [contextAccount] = contextAccounts ?? [];
   const publicTestnetClient = createPublicClient({
@@ -189,8 +185,6 @@ export function UpProvider({ children }: UpProviderProps) {
       walletConnected,
       selectedAddress,
       setSelectedAddress,
-      isSearching,
-      setIsSearching,
     };
   }, [
     client,
@@ -201,7 +195,6 @@ export function UpProvider({ children }: UpProviderProps) {
     contextAccounts,
     walletConnected,
     selectedAddress,
-    isSearching,
   ]);
   return (
     <UpContext.Provider value={data}>

@@ -174,7 +174,9 @@ const StoryAdventure = () => {
       setInitialPromptInput('');
       setTransactionPending(false);
     } catch (error) {
-      console.error('Error starting new story:', error);
+      if (!error.message.includes('User rejected the request')) {
+        console.error('Error starting new story:', error);
+      }
       setTransactionPending(false);
     }
   };
@@ -224,7 +226,9 @@ const StoryAdventure = () => {
       setTransactionPending(false);
       setOptionSelectionLoading(false);
     } catch (error) {
-      console.error('Error selecting story option:', error);
+      if (!error.message.includes('User rejected the request')) {
+        console.error('Error selecting story option:', error);
+      }
       setTransactionPending(false);
       setOptionSelectionLoading(false);
     }
