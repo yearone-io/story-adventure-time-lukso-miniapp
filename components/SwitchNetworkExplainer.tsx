@@ -26,12 +26,10 @@ const ConnectWalletExplainer = (
             z-20
           ">
         <h3 className="text-lg font-semibold text-purple-300 mb-2">Switch networks</h3>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start">
-            <span className="text-purple-400 mr-2">•</span>
-            <span>Your extension is connected to {connectedNetworkName}, but you're viewing a {profileNetworkName}. Please connect to the correct network and reload the page to proceed.</span>
-          </li>
-        </ul>
+        <div className="space-y-2 text-sm">
+          <span className="text-purple-400 mr-2">•</span>
+          <span>Your extension is connected to {connectedNetworkName}, but you're viewing a {profileNetworkName}. Please connect to the correct network and reload the page to proceed.</span>
+        </div>
         <button
           onClick={function() {
             onClose();

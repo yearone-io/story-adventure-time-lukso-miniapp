@@ -50,15 +50,20 @@ function MainContent() {
           p-6 md:p-10
         "
         >
-          <div className="flex items-center justify-center space-x-3 mb-6">
+          <div className="flex items-center justify-center space-x-3 mb-3">
             <img
               src="/universal-story.png"
               alt="Universal Story Logo"
               className="h-12 md:h-10 object-contain"
             />
-            <h2 className="text-xl md:text-2xl font-bold text-white">
-              Universal Story
-            </h2>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-white">
+                Universal Story
+              </h2>
+              <p className="text-sm md:text-md font-bold text-white">
+                Collaborative Storytelling
+              </p>
+            </div>
             <StoryExplainer />
           </div>
           <StoryAdventure />

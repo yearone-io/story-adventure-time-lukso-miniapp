@@ -361,30 +361,35 @@ const StoryAdventure = () => {
             </button>
           </div>
         ) : (
-          <div className="space-y-8">
-            {showConnectWalletTooltip && <ConnectWalletExplainer onClose={() => setShowConnectWalletTooltip(false)} />}
-            {showSwitchNetworkTooltip && <SwitchNetworkExplainer connectedNetwork={chainId} profileNetwork={profileChainId} onClose={() => setShowSwitchNetworkTooltip(false)} />}
-            <div className="story-history-section">
-              <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
-                {renderStoryHistory()}
+          <div>
+            <p className="text-xs p-2 text-white">
+              Scroll down to read the story and participate in the adventure! <a href="https://storyadventure.serveo.net">Click here</a> to install on your profile.
+            </p>
+            <div className="space-y-8">
+              {showConnectWalletTooltip && <ConnectWalletExplainer onClose={() => setShowConnectWalletTooltip(false)} />}
+              {showSwitchNetworkTooltip && <SwitchNetworkExplainer connectedNetwork={chainId} profileNetwork={profileChainId} onClose={() => setShowSwitchNetworkTooltip(false)} />}
+              <div className="story-history-section">
+                <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+                  {renderStoryHistory()}
+                </div>
               </div>
-            </div>
 
-            <div className="story-options-section mt-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
-                What Happens Next?
-              </h2>
-              {loading && !optionSelectionLoading ? (
-                <div className="flex justify-center items-center">
-                  <p className="text-white/70 animate-pulse">
-                    The story unfolds...
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {renderStoryOptions()}
-                </div>
-              )}
+              <div className="story-options-section mt-8">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
+                  What Happens Next?
+                </h2>
+                {loading && !optionSelectionLoading ? (
+                  <div className="flex justify-center items-center">
+                    <p className="text-white/70 animate-pulse">
+                      The story unfolds...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {renderStoryOptions()}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
   );

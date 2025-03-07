@@ -38,23 +38,19 @@ const StoryExplainer = () => {
           <ul className="space-y-2 text-sm">
             <li className="flex items-start">
               <span className="text-purple-400 mr-2">•</span>
-              <span>You first set a base for a story from your imagination.</span>
+              <span>Once you install this on your grid, you can start a storyline from your imagination.</span>
             </li>
             <li className="flex items-start">
               <span className="text-purple-400 mr-2">•</span>
-              <span>Our AI generates new story options based on previous choices.</span>
+              <span>Our AI generates new unique story options based on the history so far.</span>
             </li>
             <li className="flex items-start">
               <span className="text-purple-400 mr-2">•</span>
-              <span>Story choices are saved on the blockchain, making them permanent and verifiable.</span>
+              <span>Anyone visiting your profile can participate collectively in which direction the story evolves</span>
             </li>
             <li className="flex items-start">
               <span className="text-purple-400 mr-2">•</span>
-              <span>Each choice creates a unique branch in your adventure.</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-purple-400 mr-2">•</span>
-              <span>Your story can be continued any time from where you left off.</span>
+              <span>Each profile has a unique story.</span>
             </li>
           </ul>
           <button
