@@ -310,6 +310,7 @@ const StoryAdventure = () => {
               onChange={(e) => setInitialPromptInput(e.target.value)}
               placeholder={mysteriousOpenings[Math.floor(Math.random() * mysteriousOpenings.length)]}
               rows={4}
+              maxLength={150}
               className="
                 w-full bg-gray-700/50 text-white
                 rounded-xl p-4
@@ -345,7 +346,7 @@ const StoryAdventure = () => {
               <div className="story-history-section">
                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
                   {storyHistory.map((item, index) => (
-                    <StoryLine item={item} key={index} index={index} total={storyHistory.length} />
+                    <StoryLine item={item} key={index} index={index} total={storyHistory.length} chainId={chainId} />
                   ))}
                 </div>
               </div>

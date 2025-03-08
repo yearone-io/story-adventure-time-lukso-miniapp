@@ -37,6 +37,7 @@ function MainContent() {
     <>
       <div
         className="
+        w-screen
         min-h-screen bg-gradient-to-br from-gray-900 to-purple-900
         flex flex-col items-center justify-center
         p-4 md:p-8 lg:p-12
