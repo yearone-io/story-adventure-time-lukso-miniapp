@@ -8,6 +8,7 @@ pragma solidity ^0.8.19;
 contract StoryAdventure {
     struct StoryPrompt {
         string prompt;
+        address author;
         uint256 timestamp;
         bool selected;
     }
@@ -49,6 +50,7 @@ contract StoryAdventure {
         // Create new story prompt
         StoryPrompt memory newPrompt = StoryPrompt({
             prompt: initialPrompt,
+            author: msg.sender,
             timestamp: block.timestamp,
             selected: true
         });
@@ -79,6 +81,7 @@ contract StoryAdventure {
 
         StoryPrompt memory newPrompt = StoryPrompt({
             prompt: promptText,
+            author: msg.sender,
             timestamp: block.timestamp,
             selected: true
         });

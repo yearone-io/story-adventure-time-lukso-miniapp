@@ -6,10 +6,10 @@ interface ChainInfo {
 export const supportedNetworks: { [key: string]: ChainInfo } = {
   42: {
     name: 'LUKSO',
-    contractAddress: "0xE458dA7226C548bbdd66CAEd930109CC64f4180E"
+    contractAddress: "0xfcEd91879dFCda2709f3Be287d4F29eeeA0f29b6"
   },
   4201: {
     name: 'LUKSO Testnet',
-    contractAddress: "0xB2110C80c4958a2AD74137De379bD62Caec9ABe4"
+    contractAddress: "0x60f18AC1787ec4E79C6739F4BEd3Fd2420740245"
   },
 };
