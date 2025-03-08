@@ -12,9 +12,9 @@ import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
 import ConnectWalletExplainer from "@/components/ConnectWalletExplainer";
 import { supportedNetworks } from "@/config/networks";
 import SwitchNetworkExplainer from "@/components/SwitchNetworkExplainer";
+import StoryLine from "@/components/StoryLine";
+import { StoryPrompt } from "@/types/story";
 const StoryAdventureABI = StoryAdventureABIFile.abi;
-
-type StoryPrompt = { prompt: string, timestamp: number, selected: boolean };
 
 const StoryAdventure = () => {
   const { client, publicClient, accounts, contextAccounts, walletConnected, chainId, profileChainId } =
@@ -111,6 +111,7 @@ const StoryAdventure = () => {
         // Convert from contract format to component format
         const formattedStoryHistory = storyData.map(item => ({
           prompt: item.prompt,
+          author: item.author,
           timestamp: Number(item.timestamp),
           selected: item.selected
         }));
@@ -165,6 +166,7 @@ const StoryAdventure = () => {
       // Update local state with new story prompt
       const newStoryPrompt = {
         prompt: initialPromptInput.trim(),
+        author: profileAddress,
         timestamp: Math.floor(Date.now() / 1000),
         selected: true
       };
@@ -216,6 +218,7 @@ const StoryAdventure = () => {
       // Update local state with new story prompt
       const newStoryPrompt = {
         prompt: optionText,
+        author: connectedAddress!,
         timestamp: Math.floor(Date.now() / 1000),
         selected: true
       };
@@ -232,35 +235,6 @@ const StoryAdventure = () => {
       setTransactionPending(false);
       setOptionSelectionLoading(false);
     }
-  };
-
-  // Render story history
-  const renderStoryHistory = () => {
-    return storyHistory.map((item, index) => (
-      <div
-        key={index}
-        className={`
-          relative p-4 bg-white/10 rounded-lg shadow-md 
-          transform transition-all duration-300 hover:scale-[1.02]
-          ${index === storyHistory.length - 1 ? 'border-2 border-purple-500' : ''}
-        `}
-      >
-        <p className="text-white/90 italic text-base">{item.prompt}</p>
-        {index < storyHistory.length - 1 && (
-          <div className="absolute top-1/2 right-[-30px] transform -translate-y-1/2 rotate-90">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 text-purple-400 animate-pulse"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-        )}
-      </div>
-    ));
   };
 
   // Render story options with enhanced styling
@@ -370,7 +344,9 @@ const StoryAdventure = () => {
               {showSwitchNetworkTooltip && <SwitchNetworkExplainer connectedNetwork={chainId} profileNetwork={profileChainId} onClose={() => setShowSwitchNetworkTooltip(false)} />}
               <div className="story-history-section">
                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
-                  {renderStoryHistory()}
+                  {storyHistory.map((item, index) => (
+                    <StoryLine item={item} key={index} index={index} total={storyHistory.length} />
+                  ))}
                 </div>
               </div>
 
