@@ -39,7 +39,7 @@ const StoryLine = ({
   const fullDate = new Date(item.timestamp * 1000).toLocaleString();
 
   // Explorer URL
-  const explorerUrl = `${supportedNetworks[chainId].explorer}/address/${item.author}`;
+  const explorerUrl = `${supportedNetworks[chainId].universalEverything(item.author)}`;
 
   // Generate avatar color as fallback
   const generateAvatarColor = (address: string) => {
