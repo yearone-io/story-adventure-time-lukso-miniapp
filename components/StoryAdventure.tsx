@@ -352,7 +352,7 @@ const StoryAdventure = () => {
         ) : (
           <div>
             <p className="text-xs p-2 text-white">
-              Scroll down to read the story and participate in the adventure! <a className="font-bold underline" href="https://storyadventure.serveo.net">Click here</a> to install on your profile.
+              Scroll down to read the story and participate in the adventure! <a target="_blank" className="font-bold underline" href="https://storyadventure.serveo.net">Click here</a> to install on your profile.
             </p>
             <div className="space-y-8">
               {showConnectWalletTooltip && <ConnectWalletExplainer onClose={() => setShowConnectWalletTooltip(false)} />}
