@@ -19,6 +19,10 @@ contract StoryAdventure {
         bool exists;
     }
 
+    // Stats tracking
+    uint256 public totalStoriesCreated;
+    uint256 public totalPromptsAdded;
+
     // Mapping from user address to their stories
     mapping(address => Story) private userStories;
 
@@ -45,6 +49,9 @@ contract StoryAdventure {
         // If user already has a story, reset it
         if (userStories[msg.sender].exists) {
             delete userStories[msg.sender];
+        } else {
+            // Only increment total stories if this is a new story, not a reset
+            totalStoriesCreated++;
         }
 
         // Create new story prompt
@@ -65,6 +72,9 @@ contract StoryAdventure {
             owner: msg.sender,
             exists: true
         });
+
+        // Count the initial prompt
+        totalPromptsAdded++;
 
         emit StoryStarted(msg.sender, initialPrompt);
     }
@@ -87,6 +97,7 @@ contract StoryAdventure {
         });
 
         userStories[userAddress].storyLines.push(newPrompt);
+        totalPromptsAdded++;
 
         emit PromptAdded(userAddress, promptText);
     }
@@ -113,5 +124,14 @@ contract StoryAdventure {
      */
     function deleteStory() external onlyStoryOwner {
         delete userStories[msg.sender];
+    }
+
+    /**
+     * @dev Get story statistics
+     * @return stories Total number of stories created
+     * @return prompts Total number of prompts added
+     */
+    function getStats() external view returns (uint256 stories, uint256 prompts) {
+        return (totalStoriesCreated, totalPromptsAdded);
     }
 }
