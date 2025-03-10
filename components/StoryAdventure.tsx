@@ -285,11 +285,16 @@ const StoryAdventure = () => {
           This feature can only be used in a Lukso mini app.
           Get started by adding this URL to your Univeral Profile grid.
         </p>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/8a3VHrpyZSc?si=jSKFMUDLytXaE2jI"
+                title="YouTube video player" frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen></iframe>
       </div>
     );
-  };
+  }
 
-  if(!storyStarted && profileAddress.toLowerCase() !== connectedAddress?.toLowerCase()) {
+  if (!storyStarted && profileAddress.toLowerCase() !== connectedAddress?.toLowerCase()) {
     return (
       <div className="text-center space-y-6">
         <p className="text-white/70 mb-6">
