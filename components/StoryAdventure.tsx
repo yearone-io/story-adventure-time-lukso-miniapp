@@ -148,6 +148,14 @@ const StoryAdventure = () => {
   const startNewStory = async () => {
     if (!initialPromptInput.trim() || !client || !profileAddress || !publicClient) return;
 
+    if(chainId !== profileChainId) {
+      console.log("Mismatch in chainId in start new story", chainId, profileChainId);
+      setShowSwitchNetworkTooltip(true);
+      //prompt to switch to the correct network
+      return;
+    }
+
+    console.log("chainId", chainId, profileChainId);
     try {
       setTransactionPending(true);
 
@@ -307,6 +315,7 @@ const StoryAdventure = () => {
 
   return !storyStarted ? (
           <div className="text-center space-y-6">
+            {showSwitchNetworkTooltip && <SwitchNetworkExplainer connectedNetwork={chainId} profileNetwork={profileChainId} onClose={() => setShowSwitchNetworkTooltip(false)} />}
             <p className="text-white/70 mb-6">
               Begin your story with an imaginative opening scene
             </p>

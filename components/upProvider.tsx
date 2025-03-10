@@ -84,7 +84,7 @@ export function UpProvider({ children }: UpProviderProps) {
       publicTestnetClient.getCode({
         address: profileAddress,
       }).then((code ) => {
-        setProfileChainId(code === "0x" ? 42 : 4201);
+        setProfileChainId(code === undefined ? 42 : 4201);
       })
     }
   }, [contextAccounts]);
