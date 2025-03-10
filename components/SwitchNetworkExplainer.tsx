@@ -28,7 +28,7 @@ const ConnectWalletExplainer = (
         <h3 className="text-lg font-semibold text-purple-300 mb-2">Switch networks</h3>
         <div className="space-y-2 text-sm">
           <span className="text-purple-400 mr-2">•</span>
-          <span>Your extension is connected to {connectedNetworkName}, but you`&apos;re viewing a {profileNetworkName}. Please connect to the correct network and reload the page to proceed.</span>
+          <span>Your extension is connected to {connectedNetworkName}, but you&apos;re viewing a {profileNetworkName}. Please connect to the correct network and reload the page to proceed.</span>
         </div>
         <button
           onClick={function() {
