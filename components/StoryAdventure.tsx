@@ -58,6 +58,14 @@ const StoryAdventure = () => {
     "The painting in the hallway had changed—now the woman’s eyes were looking directly at me."
   ];
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText("https://universal-story.netlify.app/");
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   // Create contract instance when client is available
   const getStoryContract = () => {
     if (!client || !CONTRACT_ADDRESS) return null;
@@ -293,6 +301,22 @@ const StoryAdventure = () => {
           This feature can only be used in a Lukso mini app.
           Get started by adding this URL to your Univeral Profile grid.
         </p>
+        <div className="flex items-center justify-center space-x-2 p-3 rounded-md max-w-md mx-auto">
+          <span className="text-lg font-bold text-white truncate flex-1">https://universal-story.netlify.app</span>
+          <button
+            onClick={handleCopy}
+            className="
+                bg-gradient-to-r from-purple-600 to-blue-600
+                text-white font-bold py-3 px-6
+                rounded-full
+                hover:from-purple-700 hover:to-blue-700
+                transition-all duration-300
+                disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Copy to clipboard"
+          >
+            Copy
+          </button>
+        </div>
         <iframe width="560" height="315" src="https://www.youtube.com/embed/8a3VHrpyZSc?si=jSKFMUDLytXaE2jI"
                 title="YouTube video player" frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
