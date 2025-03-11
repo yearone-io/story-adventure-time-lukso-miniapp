@@ -14,6 +14,7 @@ import { supportedNetworks } from "@/config/networks";
 import SwitchNetworkExplainer from "@/components/SwitchNetworkExplainer";
 import StoryLine from "@/components/StoryLine";
 import { StoryPrompt } from "@/types/story";
+import { IoReload } from "react-icons/io5";
 const StoryAdventureABI = StoryAdventureABIFile.abi;
 
 const StoryAdventure = () => {
@@ -390,9 +391,28 @@ const StoryAdventure = () => {
               </div>
 
               <div className="story-options-section mt-8">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
-                  What Happens Next?
-                </h2>
+                <div className="flex justify-center space-x-3">
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
+                    What Happens Next?
+                  </h2>
+                  <button
+                    onClick={generateNextOptions}
+                    className="
+                    w-8 h-8
+                    bg-purple-600 text-white font-bold
+                    rounded-full
+                    flex items-center justify-center
+                    hover:bg-purple-700
+                    transition-all duration-300
+                    shadow-lg
+                    "
+                    disabled={loading}
+                    aria-label="Refresh"
+                  >
+                    <IoReload />
+                  </button>
+                </div>
+
                 {loading && !optionSelectionLoading ? (
                   <div className="flex justify-center items-center">
                     <p className="text-white/70 animate-pulse">
