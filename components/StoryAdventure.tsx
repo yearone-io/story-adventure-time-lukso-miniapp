@@ -254,6 +254,58 @@ const StoryAdventure = () => {
     }
   };
 
+  const resetStory = async () => {
+    if (!client || !profileAddress) return;
+
+    if(!walletConnected) {
+      //prompt to connect
+      setShowConnectWalletTooltip(true);
+      return;
+    }
+
+    if(chainId !== profileChainId) {
+      console.log("Mismatch in chainId", chainId, profileChainId);
+      setShowSwitchNetworkTooltip(true);
+      //prompt to switch to the correct network
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setTransactionPending(true);
+      setOptionSelectionLoading(true);
+
+      // Call contract to add a new story prompt
+      const hash = await client.writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: StoryAdventureABI,
+        functionName: "deleteStory",
+        args: [],
+        account: connectedAddress,
+        chain: client.chain
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash });
+
+      // Update local state
+      setStoryHistory([]);
+      setCurrentOptions([]);
+      setTransactionPending(false);
+      setOptionSelectionLoading(false);
+      setLoading(false);
+      setStoryStarted(false);
+      setInitialPromptInput("");
+    } catch (error: any) {
+      if (!error.message || !error.message?.includes('User rejected the request')) {
+        console.error('Error selecting story option:', error);
+      }
+      setTransactionPending(false);
+      setOptionSelectionLoading(false);
+      setLoading(false);
+    }
+  };
+
+
   // Render story options with enhanced styling
   const renderStoryOptions = () => {
     if (optionSelectionLoading) {
@@ -379,6 +431,9 @@ const StoryAdventure = () => {
             <p className="text-xs p-2 text-white">
               Scroll down to read the story and participate in the adventure! <a target="_blank" className="font-bold underline" href="https://universal-story.netlify.app">Click here</a> to install on your profile.
             </p>
+            {profileAddress === connectedAddress && (
+              <p className="text-xs p-2 text-white"><button onClick={() => resetStory()} className="font-bold underline">Click here</button> to reset your story. This will delete all the history and let you start with a fresh story line.</p>
+            )}
             <div className="space-y-8">
               {showConnectWalletTooltip && <ConnectWalletExplainer onClose={() => setShowConnectWalletTooltip(false)} />}
               {showSwitchNetworkTooltip && <SwitchNetworkExplainer connectedNetwork={chainId} profileNetwork={profileChainId} onClose={() => setShowSwitchNetworkTooltip(false)} />}
