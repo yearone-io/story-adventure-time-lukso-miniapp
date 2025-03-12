@@ -1,95 +1,69 @@
-# Mini-App next.js template
+# LUKSO Storyline Mini-App 📖✨
 
-A template project demonstrating how to build mini-apps using the [up-provider package](https://github.com/lukso-network/tools-up-provider) and interacting with Universal Profiles on [Universal Everything](https://universaleverything.io), built with [next.js](https://nextjs.org).
+**Turn your LUKSO profile into an interactive, AI-powered adventure!** Visitors shape your story, deciding on what happens next, making your digital identity more engaging and unpredictable. 🚀
 
-## Overview
+## 🚀 Features
+- **User-driven Story Evolution** – Visitors decide on the next chapter of your story.
+- **AI-Generated Choices** – An AI model suggests multiple paths based on the existing storyline.
+- **Decentralized & Transparent** – All story decisions are recorded on-chain for authenticity.
+- **Engaging Profiles** – Make your profile more than just a static page—turn it into a saga!
 
-This template showcases:
-- [UP-Provider](https://github.com/lukso-network/tools-up-provider) implementation and wallet connection on the Grid
-- Profile search functionality using Envio integration for fast querying
-- Integrates the [@lukso/web-components](https://www.npmjs.com/package/@lukso/web-components) library for ready-to-use branded components
-- Uses the [erc725js](https://docs.lukso.tech/tools/dapps/erc725js/getting-started) library to fetch profile data from the blockchain
+## 🎭 How It Works
+1. **Start Your Story** – Write an initial storyline for your profile.
+2. **AI Suggests Next Steps** – The system generates 3 possible continuations.
+3. **Visitors-driven** – Your profile visitors choose which path to take.
 
-> **Cursor Tip:** You can rename this README.md file to `repo.cursorrules` for better AI development experience using Cursor.
+## 🛠️ Tech Stack
+- **Blockchain**: LUKSO [Universal Profiles](https://universal.page/universal-profiles)
+- **Smart Contracts**: Solidity-based contracts for storing story data. [StoryAdventure.sol](contracts/StoryAdventure.sol)
+- **AI Model**: GPT-based text generation
+- **Frontend**: [tools-up-provider](https://github.com/lukso-network/tools-up-provider)
 
-## Key Features
+## 🏗️ Architecture diagram
+```mermaid
+graph TD;
+    User --> UniversalStoryUI;
+    UniversalStoryUI --> StoryContract;
+    UniversalStoryUI --> AIModel;
+```
 
-### UP-Provider Integration
-The template demonstrates how to:
-- Connect to Universal Profile browser extension from the Grid
-- Manage UP contexts on the Grid
+## 🧩 Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant ProfileOwner as Profile Owner
+    participant UniversalStory as Universal Story UI
+    participant StoryContract as StoryAdventure.sol (Smart Contract)
+    participant AIModel as AI Model API
+    participant Visitor as Visitor
 
-### Envio Integration
-Shows how to:
-- Query the LUKSO Envio indexer
-- Search for Universal Profiles
-- Display profile information and images
+    ProfileOwner ->> UniversalStory: Creates new story
+    UniversalStory ->> StoryContract: Stores base story
+    UniversalStory ->> AIModel: Requests 3 story options
+    AIModel -->> UniversalStory: Returns 3 options
+    Visitor ->> UniversalStory: Selects an option
+    UniversalStory ->> StoryContract: Stores chosen option
+    UniversalStory ->> AIModel: Requests next options
+    AIModel -->> UniversalStory: Generates next options
+```
 
-### Web Components
-Shows how to:
-- Use the [@lukso/web-components](https://www.npmjs.com/package/@lukso/web-components) library to display profile card
+## 🚀 Getting Started
 
-### ERC-725.js
-Shows how to:
-- Use the [erc725js](https://docs.lukso.tech/tools/dapps/erc725js/getting-started) library to fetch profile data from the blockchain
+### Prerequisites
+- Node.js & yarn
+- LUKSO Universal Profile
 
-## Getting Started
-
-1. Install dependencies:
-```bash
+### Installation
+```sh
+git clone https://github.com/democrazyfi/universal-story-lukso-miniapp
+cd universal-story-lukso-miniapp
 yarn install
 ```
-2. Run the development server:
-```bash
+
+### Running the App
+```sh
 yarn dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.(Note that the Grid context is not available in the local environment)
+## 📜 License
+This project is licensed under the **MIT License**.
 
-4. Testing your mini-app on the Grid:
-
-We're using `localtunnel` to test the mini-app on the Grid. This library helps us to generate a public URL that can be used to add the mini-app to the Grid.
-
-> Alternatively, you can use free cloud deployment services like Vercel, Replit, etc.
-
-Globally install `localtunnel`: 
-
-```bash
-npm install -g localtunnel
-```
-
-In the second terminal, run:
-
-```bash
-lt --port <LOCALHOST_PORT>
-```
-
-You can use this URL to add the mini-app to the Grid. 
-
-## Smart contracts
-
-```
-npx hardhat deployContracts \
-  --network luksoTestnet \
-  --names "StoryAdventure" \
-  --paths "contracts"
-```
-
-## Project Structure
-
-- `components/upProvider.tsx`: Core UP Provider implementation and wallet connection logic
-- `components/ProfileSearch.tsx`: Example of Envio integration for profile search
-- `components/Donate.tsx`: Example use-case of this template. Uses the client from the up-provider package to interact with the blockchain
-- `components/LuksoProfile.tsx`: Example of using the [@lukso/web-components](https://www.npmjs.com/package/@lukso/web-components) library to display profile images that is fetched using the [erc725js](https://docs.lukso.tech/tools/dapps/erc725js/getting-started) library
-
-## Learn More
-
-- [LUKSO Documentation](https://docs.lukso.tech/) - Learn more about developing on LUKSO
-- [UP Browser Extension](https://docs.lukso.tech/install-up-browser-extension) - Install the Universal Profile Browser Extension
-- [erc725js](https://docs.lukso.tech/tools/dapps/erc725js/getting-started) - Learn more about the erc725js library 
-- [@lukso/web-components](https://www.npmjs.com/package/@lukso/web-components) - Learn more about the @lukso/web-components library
-
-
-## Contributing
-
-Contributions are welcome! Feel free to submit issues and pull requests.
