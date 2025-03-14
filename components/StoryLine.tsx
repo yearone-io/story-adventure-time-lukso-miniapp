@@ -8,6 +8,11 @@ import erc725schema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json';
 // Constants for IPFS gateway and RPC endpoints
 const IPFS_GATEWAY = 'https://api.universalprofile.cloud/ipfs/';
 
+// Function to get a random delay between min and max seconds
+const getRandomDelay = (min = 1, max = 5) => {
+  return Math.floor(Math.random() * (max - min + 1) + min) * 1000;
+};
+
 const StoryLine = ({
                      item,
                      index,
@@ -59,6 +64,12 @@ const StoryLine = ({
       setIsLoading(true);
 
       try {
+        // Add a random delay between 1-5 seconds before fetching
+        const delay = getRandomDelay(1, 5);
+
+        // Wait for the random delay
+        await new Promise(resolve => setTimeout(resolve, delay));
+
         const config = { ipfsGateway: IPFS_GATEWAY };
         const rpcEndpoint = supportedNetworks[chainId].rpcUrl;
 
