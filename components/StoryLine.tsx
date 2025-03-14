@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { supportedNetworks } from "@/config/networks";
 import { ERC725 } from '@erc725/erc725.js';
 import erc725schema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json';
+import { profileImageCache, fetchInProgress } from "@/services/profile-cache";
 
 // Constants for IPFS gateway and RPC endpoints
 const IPFS_GATEWAY = 'https://api.universalprofile.cloud/ipfs/';
@@ -61,11 +62,44 @@ const StoryLine = ({
     async function fetchLuksoProfileImage() {
       if (!item.author) return;
 
+      // Create a cache key using author address and chainId
+      const cacheKey = `${item.author}_${chainId}`;
+
+      // Check if we already have this profile image cached
+      if (profileImageCache.has(cacheKey)) {
+        const cachedUrl = profileImageCache.get(cacheKey);
+        setAvatarUrl(cachedUrl);
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if a fetch is already in progress for this author
+      if (fetchInProgress.has(cacheKey)) {
+        // Wait for it to complete by checking every 500ms
+        const checkCache = setInterval(() => {
+          if (profileImageCache.has(cacheKey)) {
+            setAvatarUrl(profileImageCache.get(cacheKey));
+            setIsLoading(false);
+            clearInterval(checkCache);
+          }
+        }, 500);
+
+        // Set a timeout to stop checking after 10 seconds to prevent infinite loops
+        setTimeout(() => {
+          clearInterval(checkCache);
+          setIsLoading(false);
+        }, 10000);
+
+        return;
+      }
+
+      // Mark this fetch as in progress
+      fetchInProgress.add(cacheKey);
       setIsLoading(true);
 
       try {
         // Add a random delay between 1-5 seconds before fetching
-        const delay = getRandomDelay(2, 10);
+        const delay = getRandomDelay(1, 5);
 
         // Wait for the random delay
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -76,6 +110,7 @@ const StoryLine = ({
         const profile = new ERC725(erc725schema, item.author, rpcEndpoint, config);
         const fetchedData = await profile.fetchData('LSP3Profile');
 
+        let url = null;
         if (
           fetchedData?.value &&
           typeof fetchedData.value === 'object' &&
@@ -84,14 +119,22 @@ const StoryLine = ({
           const profileImagesIPFS = fetchedData.value.LSP3Profile.profileImage;
 
           if (profileImagesIPFS?.[0]?.url) {
-            const url = profileImagesIPFS[0].url.replace('ipfs://', IPFS_GATEWAY);
+            url = profileImagesIPFS[0].url.replace('ipfs://', IPFS_GATEWAY);
             setAvatarUrl(url);
           }
         }
+
+        // Cache the result (even if it's null, to avoid repeat fetches for users without profile images)
+        profileImageCache.set(cacheKey, url);
+
       } catch (error) {
         console.error('Error fetching LUKSO profile image:', error);
+        // Cache null to avoid repeated failed requests
+        profileImageCache.set(cacheKey, null);
       } finally {
         setIsLoading(false);
+        // Remove from in-progress tracking
+        fetchInProgress.delete(cacheKey);
       }
     }
 
@@ -114,7 +157,7 @@ const StoryLine = ({
           rel="noopener noreferrer"
           title={item.author}
           className="flex-shrink-0 mt-1"
-          >
+        >
           {!isLoading && avatarUrl ? (
             <img
               src={avatarUrl}
