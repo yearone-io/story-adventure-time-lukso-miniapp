@@ -65,7 +65,7 @@ const StoryLine = ({
 
       try {
         // Add a random delay between 1-5 seconds before fetching
-        const delay = getRandomDelay(1, 5);
+        const delay = getRandomDelay(2, 10);
 
         // Wait for the random delay
         await new Promise(resolve => setTimeout(resolve, delay));
