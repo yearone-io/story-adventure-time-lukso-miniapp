@@ -1,5 +1,5 @@
 {
-	"name": "cloudflare-json-response",
+	"name": "universal-stories",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-04-08",
 	"observability": {
