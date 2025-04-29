@@ -10,3 +10,26 @@ Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type
 `Env` object can be regenerated with `npm run cf-typegen`.
 
 Learn more at https://developers.cloudflare.com/workers/
+
+
+## Example curl calls
+
+### Generate prompts
+
+```shell
+curl -X POST http://localhost:8787/generate-prompts \
+  -H "Content-Type: application/json" \
+  -d '{
+    "storyHistory": ["Footsteps echoed behind me in the empty alley, but when I turned, no one was there."]
+}' | jq
+```
+
+### Generate image
+
+```shell
+curl -X POST http://localhost:8787/generate-image \
+  -H "Content-Type: application/json" \
+  -d '{
+    "storyHistory": ["Footsteps echoed behind me in the empty alley, but when I turned, no one was there."]
+}' > generate-image.png
+```
