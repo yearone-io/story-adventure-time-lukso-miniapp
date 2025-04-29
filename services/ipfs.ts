@@ -28,6 +28,8 @@ export const pinFileToIPFS = async (fileName: string, file: File) => {
         },
       }
     );
+    console.log('ipfs data')
+    console.log(res.data)
     return res.data.IpfsHash;
   } catch (error) {
     console.log(error);

@@ -52,6 +52,6 @@ export const generatePromptImage =  async (storyHistory: string[]): Promise<stri
     console.error('Error generating story options:', error);
 
     // Return fallback options in case of API failure
-    return '/universal-story.png';
+    // TODO fallback 
   }
 };
