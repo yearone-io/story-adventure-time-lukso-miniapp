@@ -1,9 +1,12 @@
 
-
 export interface Env {
 	// If you set another name in the Wrangler config file as the value for 'binding',
 	// replace "AI" with the variable name you defined.
 	AI: Ai;
+}
+
+interface StoryRequest {
+	storyHistory: string[];
 }
 
 export default {
@@ -13,12 +16,13 @@ export default {
 		}
 		const url = new URL(request.url);
 		if(url.pathname == "/generate-prompts") {
-			const requestData = await request.json();
+
+			const requestData = (await request.json() as StoryRequest);
 			const { storyHistory } = requestData;
 			const storySoFar = storyHistory.join("\n");
 			return generatePrompts(env, storySoFar);
 		} else if (url.pathname == "/generate-image") {
-			const requestData = await request.json();
+			const requestData = (await request.json() as StoryRequest);
 			const { storyHistory } = requestData;
 			const storySoFar = storyHistory.join("\n");
 			return generateImage(env, storySoFar);
@@ -29,7 +33,7 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 
-const generatePrompts = async (env: Env, storySoFar: string[]) => {
+const generatePrompts = async (env: Env, storySoFar: string) => {
 	const chat = {
 		messages: [
 			{
@@ -71,15 +75,16 @@ const generatePrompts = async (env: Env, storySoFar: string[]) => {
 	};
 
 	// Call Llama 3 to generate continuations
+	// @ts-ignore
 	const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', chat);
 
 	// Return the options as JSON
 	return Response.json(response);
 }
 
-const generateImage = async (env: Env, storySoFar: string[]) => {
+const generateImage = async (env: Env, prompt: string) => {
 	const inputs = {
-		prompt: `Generate an image for this story history so far, in cyberpunk style: ${storySoFar}`,
+		prompt: `Generate an image for t ${prompt}`,
 	};
 
 	const response = await env.AI.run(
