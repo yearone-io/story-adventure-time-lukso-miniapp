@@ -1,7 +1,7 @@
 
 // 1. call a new /api/generate-image with the first story prompt and return a hardcoded url of an image
 // 2. upload it to IPFS
-
+const axios = require('axios');
 import { pinFileToIPFS } from "@/services/ipfs";
 
 // 3. pass the ipfs url to the smart contract
@@ -12,7 +12,17 @@ export async function POST(
         const { storyHistory } =  await request.json();
 
         console.log(storyHistory);
-        const imageFile = '/universal-story.png'; // todo get image
+        let imageFile = null; // todo get image
+
+        try {
+            const imagePayload = {
+                "storyHistory": storyHistory
+            }
+            imageFile = await axios.post(`${process.env.CLOUDFLARE_WORKER_URL}/generate-image`, imagePayload)
+        } catch (error) {
+            // todo 
+            // default image?
+        }
 
         // upload to ipfs
         const ipfs = await pinFileToIPFS('universal-story', imageFile);
