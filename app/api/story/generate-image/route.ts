@@ -1,8 +1,33 @@
 
 // 1. call a new /api/generate-image with the first story prompt and return a hardcoded url of an image
+
+import { pinFileToIPFS } from "@/services/ipfs";
+
 // 2. upload it to IPFS
 const axios = require('axios');
-import { pinFileToIPFS } from "@/services/ipfs";
+
+
+/**
+ * Generates an image from a story and returns it as a File object
+ */
+export const generateImageFile = async (storyHistory: string[]): Promise<File> => {
+  const response = await axios.post(
+    'https://universal-stories.hello-e4c.workers.dev/generate-image',
+    {
+      storyHistory: storyHistory,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      responseType: 'blob',
+    }
+  );
+
+  const blob = new Blob([response.data], { type: 'image/png' });
+  return new File([blob], 'generate-image.png', { type: 'image/png' });
+};
+  
 
 // 3. pass the ipfs url to the smart contract
 export async function POST(
@@ -12,37 +37,17 @@ export async function POST(
         const { storyHistory } =  await request.json();
 
         console.log(storyHistory);
-        let imageFile = null; // todo get image
+        let imageFile = await generateImageFile(storyHistory)
 
-        try {
-            const imagePayload = {
-                "storyHistory": storyHistory
-            }
-            imageFile = await axios.post(`${process.env.CLOUDFLARE_WORKER_URL}/generate-image`, imagePayload)
-        } catch (error) {
-            // todo 
-            // default image?
-        }
+        console.log('BOOOO')
+        console.log(imageFile)
 
         // upload to ipfs
         const ipfs = await pinFileToIPFS('universal-story', imageFile);
+        console.log('sent to ipfs')
 
         // return image and ipfs url
 
-    
-        // const response = await fetch(process.env.CLOUDFLARE_WORKER_URL!, {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({
-        //     storyHistory: storyHistory,
-        //   }),
-        // });
-
-        // if (!getImage.ok) {
-        // throw new Error(`API responded with status: ${getImage.status}`);
-        // }
 
     } catch (error) {
       console.error("Error processing image prompt:", error);
