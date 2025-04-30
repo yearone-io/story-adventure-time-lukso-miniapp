@@ -1,36 +1,42 @@
+import { pinFileToIPFS } from '@/services/ipfs';
+import axios from 'axios';
+import fs from 'fs/promises';
+import path from 'path';
 
 
-import { pinFileToIPFS } from "@/services/ipfs";
-
-const axios = require('axios');
-
-
-const generateImageFile = async (storyHistory: string[]): Promise<File> => {
+export const generateImageBuffer = async (storyHistory: string[]): Promise<{ buffer: Buffer; name: string; type: string }> => {
     try {
       const response = await axios.post(
         'https://universal-stories.hello-e4c.workers.dev/generate-image',
         {
-          storyHistory: storyHistory,
+          storyHistory: [
+            'Footsteps echoed behind me in the empty alley, but when I turned, no one was there.',
+          ],
         },
         {
           headers: {
             'Content-Type': 'application/json',
           },
-          responseType: 'blob',
+          responseType: 'arraybuffer',
         }
       );
   
-      const blob = new Blob([response.data], { type: 'image/png' });
-      return new File([blob], 'generate-image.png', { type: 'image/png' });
+      return {
+        buffer: Buffer.from(response.data),
+        name: 'generate-image.png',
+        type: 'image/png',
+      };
     } catch (error) {
       console.warn('Image generation failed, using fallback image.');
   
-      // Fallback: fetch from static URL
-      const fallbackResponse = await fetch('/universal-story.png');
-      const fallbackBlob = await fallbackResponse.blob();
-      return new File([fallbackBlob], 'fallback-image.png', {
-        type: fallbackBlob.type,
-      });
+      const fallbackPath = path.join(process.cwd(), 'public', 'universal-story.png');
+      const fallbackBuffer = await fs.readFile(fallbackPath);
+  
+      return {
+        buffer: fallbackBuffer,
+        name: 'fallback-image.png',
+        type: 'image/png',
+      };
     }
   };
   
@@ -43,14 +49,14 @@ export async function POST(
         const { storyHistory } =  await request.json();
 
         console.log(storyHistory);
-        let imageFile = await generateImageFile(storyHistory)
+        let imageFile = await generateImageBuffer(storyHistory)
      
         console.log('BOOOO')
         console.log(imageFile)
 
         // 2. upload it to IPFS
-        const ipfs = await pinFileToIPFS('universal-story', imageFile);
-        console.log('sent to ipfs')
+        // const ipfs = await pinFileToIPFS('universal-story', imageFile);
+        // console.log('sent to ipfs')
 
         // 3. pass the ipfs url to the smart contract
         // return image and ipfs url
