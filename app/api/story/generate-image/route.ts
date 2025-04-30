@@ -6,8 +6,9 @@ import path from 'path';
 
 export const generateImageBuffer = async (storyHistory: string[]): Promise<{ buffer: Buffer; name: string; type: string }> => {
     try {
+      const url = process.env.CLOUDFLARE_WORKER_URL + `/generate-image`;
       const response = await axios.post(
-        'https://universal-stories.hello-e4c.workers.dev/generate-image',
+        url,
         {
           storyHistory: storyHistory,
         },
