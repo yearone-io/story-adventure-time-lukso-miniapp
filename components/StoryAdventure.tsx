@@ -5,7 +5,7 @@ import { useUpProvider } from "@/components/upProvider";
 import { getContract } from "viem";
 
 // This would be your LLM API service
-import { generatePromptImage, generateStoryOptions } from '../services/llm-service';
+import { generateStoryOptions } from "@/services/llm-service";
 
 // Import ABI of your deployed contract
 import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
@@ -168,8 +168,10 @@ const StoryAdventure = () => {
     try {
       setTransactionPending(true);
       // Get image based on prompt
-      // const promptImageHash = await generatePromptImage([initialPromptInput.trim()])
-      // todo do something with image
+      // const generateImage = await generatePromptImage([initialPromptInput.trim()]);
+      // console.log("generateImage", generateImage);
+      // const imageIpfsHash = await pinFileToIPFS("test", generateImage);
+      // console.log("imageIpfsHash", imageIpfsHash);
 
       // Call contract to start a new story
       const hash = await client.writeContract({

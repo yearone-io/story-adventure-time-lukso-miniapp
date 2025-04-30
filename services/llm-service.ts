@@ -29,12 +29,14 @@ export const generateStoryOptions = async (storyHistory: string[]): Promise<stri
   }
 };
 
-export const generatePromptImage = async (storyHistory: string[]): Promise<string | null> => {
-  try {
+export const generatePromptImage = async(
+  storyHistory: string[]
+): Promise<Blob> => {
     const response = await fetch("/api/story/generate-image", {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",   // you’re sending JSON
+        "Accept":        "image/png",          // you expect an image back
       },
       body: JSON.stringify({ storyHistory }),
     });
@@ -43,10 +45,6 @@ export const generatePromptImage = async (storyHistory: string[]): Promise<strin
       throw new Error(`API responded with status: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data.ipfsUrl;
-  } catch (error) {
-    console.error('Error generating story image:', error);
-    return null;
-  }
+    // read the raw bytes as a Blob
+    return await response.blob();
 };

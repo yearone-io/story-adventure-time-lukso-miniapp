@@ -3,38 +3,31 @@ const FormData = require('form-data');
 
 export const pinFileToIPFS = async (
     fileName: string,
-    file: { buffer: Buffer; name: string; type: string }
+    blob: Blob
   ) => {
-    const form = new FormData();
-    form.append('title', file.name);
-  
-    // ✅ Use Buffer directly — works perfectly with axios and native FormData
-    form.append('file', file.buffer, file.name);
-  
-    try {
-        // todo add prod route
-        const tokenResponse = await axios.post('https://universal-story.netlify.app/api/story/generate-pinata-token');
 
+    try {
+      const tokenResponse = await axios.post('/api/story/generate-pinata-token');
 
       if (tokenResponse.data.error) {
         throw new Error(tokenResponse.data.error);
       }
-  
-      const res = await axios.post(
-        'https://api.pinata.cloud/pinning/pinFileToIPFS',
-        form,
-        {
-          maxContentLength: Infinity,
-          headers: {
-            Authorization: `Bearer ${tokenResponse.data.jwt}`,
-            path: fileName,
-            ...form.getHeaders(), // 👈 Ensures multipart boundary is correct
-          },
-        }
-      );
-  
-      console.log('ipfs data', res.data);
-      return res.data.IpfsHash;
+
+      const file = new File([blob], fileName)
+      const data = new FormData();
+      data.append("file", file);
+
+      const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${tokenResponse.data.jwt}`,
+        },
+        body: data,
+      });
+      const resData = (await res.json()) as { IpfsHash: string} ;
+      console.log(resData);
+
+      return resData.IpfsHash;
     } catch (error) {
       console.error('Failed to pin file:', error);
       throw error;
