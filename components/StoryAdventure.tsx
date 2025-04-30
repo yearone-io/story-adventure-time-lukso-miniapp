@@ -167,33 +167,34 @@ const StoryAdventure = () => {
     console.log("chainId", chainId, profileChainId);
     try {
       setTransactionPending(true);
-      const promptImage = await generatePromptImage([initialPromptInput.trim()])
       // Get image based on prompt
+      const promptImageHash = await generatePromptImage([initialPromptInput.trim()])
+      // todo do something with image
 
-      // // Call contract to start a new story
-      // const hash = await client.writeContract({
-      //   address: CONTRACT_ADDRESS,
-      //   abi: StoryAdventureABI,
-      //   functionName: "startNewStory",
-      //   args: [initialPromptInput.trim()],
-      //   account: connectedAddress,
-      //   chain: client.chain
-      // });
+      // Call contract to start a new story
+      const hash = await client.writeContract({
+        address: CONTRACT_ADDRESS,
+        abi: StoryAdventureABI,
+        functionName: "startNewStory",
+        args: [initialPromptInput.trim()],
+        account: connectedAddress,
+        chain: client.chain
+      });
 
-      // await publicClient.waitForTransactionReceipt({ hash });
+      await publicClient.waitForTransactionReceipt({ hash });
 
-      // // Update local state with new story prompt
-      // const newStoryPrompt = {
-      //   prompt: initialPromptInput.trim(),
-      //   author: profileAddress,
-      //   timestamp: Math.floor(Date.now() / 1000),
-      //   selected: true
-      // };
+      // Update local state with new story prompt
+      const newStoryPrompt = {
+        prompt: initialPromptInput.trim(),
+        author: profileAddress,
+        timestamp: Math.floor(Date.now() / 1000),
+        selected: true
+      };
 
-      // setStoryHistory([newStoryPrompt]);
-      // setStoryStarted(true);
-      // setInitialPromptInput('');
-      // setTransactionPending(false);
+      setStoryHistory([newStoryPrompt]);
+      setStoryStarted(true);
+      setInitialPromptInput('');
+      setTransactionPending(false);
     } catch (error: any) {
       if (!error.message || !error.message?.includes('User rejected the request')) {
         console.error('Error starting new story:', error);

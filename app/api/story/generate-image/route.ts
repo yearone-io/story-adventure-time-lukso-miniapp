@@ -9,9 +9,7 @@ export const generateImageBuffer = async (storyHistory: string[]): Promise<{ buf
       const response = await axios.post(
         'https://universal-stories.hello-e4c.workers.dev/generate-image',
         {
-          storyHistory: [
-            'Footsteps echoed behind me in the empty alley, but when I turned, no one was there.',
-          ],
+          storyHistory: storyHistory,
         },
         {
           headers: {
@@ -50,18 +48,13 @@ export async function POST(
 
         console.log(storyHistory);
         let imageFile = await generateImageBuffer(storyHistory)
-     
-        console.log('BOOOO')
-        console.log(imageFile)
 
         // 2. upload it to IPFS
-        const ipfsHash = await pinFileToIPFS(imageFile.name, imageFile);
+        const ipfsData = await pinFileToIPFS(imageFile.name, imageFile);
         console.log('sent to ipfs')
 
         // 3. pass the ipfs url to the smart contract
-        // return image and ipfs url
-
-
+        return ipfsData.IpfsHash
     } catch (error) {
       console.error("Error processing image prompt:", error);
       return new Response(

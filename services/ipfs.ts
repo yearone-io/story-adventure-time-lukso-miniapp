@@ -1,8 +1,5 @@
-import { AxiosResponse } from 'axios';
-
 const axios = require('axios');
 const FormData = require('form-data');
-
 
 export const pinFileToIPFS = async (
     fileName: string,
@@ -15,7 +12,8 @@ export const pinFileToIPFS = async (
     form.append('file', file.buffer, file.name);
   
     try {
-        const tokenResponse = await axios.post('http://localhost:3000/api/story/generate-pinata-token');
+        // todo add prod route
+        const tokenResponse = await axios.post('https://universal-story.netlify.app/api/story/generate-pinata-token');
 
 
       if (tokenResponse.data.error) {
@@ -42,32 +40,6 @@ export const pinFileToIPFS = async (
       throw error;
     }
   };
-
-// export const pintJsonToIpfs = async (data: string) => {
-//   const tokenResponse = (await axios.post(
-//     '/api/generate-pinata-token'
-//   )) as AxiosResponse<ResponseData>;
-
-//   if (tokenResponse.data.error) {
-//     throw new Error(tokenResponse.data.error);
-//   }
-
-//   try {
-//     const res = await axios.post(
-//       'https://api.pinata.cloud/pinning/pinJSONToIPFS',
-//       data,
-//       {
-//         headers: {
-//           'Content-Type': 'application/json',
-//           Authorization: `Bearer ${tokenResponse.data.jwt}`,
-//         },
-//       }
-//     );
-//     return res.data.IpfsHash;
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
 
 // export async function getImageFromIPFS(
 //   ipfsUrl: string,
