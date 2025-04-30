@@ -37,7 +37,7 @@ export async function POST() {
       'https://api.pinata.cloud/users/generateApiKey',
       options
     );
-    const json = await jwtRepsonse.json();
+    const json = (await jwtRepsonse.json()) as {JWT: string, error?: string};
 
     if (json.error) {
       console.error('Error response from pinata', json.error);
