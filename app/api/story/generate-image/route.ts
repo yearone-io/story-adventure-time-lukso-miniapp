@@ -55,8 +55,8 @@ export async function POST(
         console.log(imageFile)
 
         // 2. upload it to IPFS
-        // const ipfs = await pinFileToIPFS('universal-story', imageFile);
-        // console.log('sent to ipfs')
+        const ipfsHash = await pinFileToIPFS(imageFile.name, imageFile);
+        console.log('sent to ipfs')
 
         // 3. pass the ipfs url to the smart contract
         // return image and ipfs url

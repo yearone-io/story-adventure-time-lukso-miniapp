@@ -3,38 +3,45 @@ import { AxiosResponse } from 'axios';
 const axios = require('axios');
 const FormData = require('form-data');
 
-export const pinFileToIPFS = async (fileName: string, file: File) => {
-  const data = new FormData();
-  data.append('title', file.name);
-  data.append('file', file);
 
-  try {
-    const tokenResponse = (await axios.post(
-      '/api/generate-pinata-token'
-    )) as AxiosResponse;
+export const pinFileToIPFS = async (
+    fileName: string,
+    file: { buffer: Buffer; name: string; type: string }
+  ) => {
+    const form = new FormData();
+    form.append('title', file.name);
+  
+    // ✅ Use Buffer directly — works perfectly with axios and native FormData
+    form.append('file', file.buffer, file.name);
+  
+    try {
+        const tokenResponse = await axios.post('http://localhost:3000/api/story/generate-pinata-token');
 
-    if (tokenResponse.data.error) {
-      throw new Error(tokenResponse.data.error);
-    }
-    const res = await axios.post(
-      'https://api.pinata.cloud/pinning/pinFileToIPFS',
-      data,
-      {
-        maxContentLength: 'Infinity',
-        headers: {
-          'Content-Type': `multipart/form-data; boundary=${data._boundary}`,
-          Authorization: `Bearer ${tokenResponse.data.jwt}`,
-          path: fileName,
-        },
+
+      if (tokenResponse.data.error) {
+        throw new Error(tokenResponse.data.error);
       }
-    );
-    console.log('ipfs data')
-    console.log(res.data)
-    return res.data.IpfsHash;
-  } catch (error) {
-    console.log(error);
-  }
-};
+  
+      const res = await axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        form,
+        {
+          maxContentLength: Infinity,
+          headers: {
+            Authorization: `Bearer ${tokenResponse.data.jwt}`,
+            path: fileName,
+            ...form.getHeaders(), // 👈 Ensures multipart boundary is correct
+          },
+        }
+      );
+  
+      console.log('ipfs data', res.data);
+      return res.data.IpfsHash;
+    } catch (error) {
+      console.error('Failed to pin file:', error);
+      throw error;
+    }
+  };
 
 // export const pintJsonToIpfs = async (data: string) => {
 //   const tokenResponse = (await axios.post(
