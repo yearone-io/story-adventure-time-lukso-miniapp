@@ -225,6 +225,12 @@ const StoryAdventure = () => {
       setTransactionPending(true);
       setOptionSelectionLoading(true);
 
+      // Get image based on prompt
+      // const generateImage = await generatePromptImage([initialPromptInput.trim()]);
+      // console.log("generateImage", generateImage);
+      // const imageIpfsHash = await pinFileToIPFS("test", generateImage);
+      // console.log("imageIpfsHash", imageIpfsHash);
+
       // Call contract to add a new story prompt
       const hash = await client.writeContract({
         address: CONTRACT_ADDRESS,
