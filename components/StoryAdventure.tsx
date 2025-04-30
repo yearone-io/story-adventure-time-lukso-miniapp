@@ -168,7 +168,7 @@ const StoryAdventure = () => {
     try {
       setTransactionPending(true);
       // Get image based on prompt
-      const promptImageHash = await generatePromptImage([initialPromptInput.trim()])
+      // const promptImageHash = await generatePromptImage([initialPromptInput.trim()])
       // todo do something with image
 
       // Call contract to start a new story
