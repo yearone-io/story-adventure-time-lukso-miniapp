@@ -9,6 +9,9 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "workspaces": [
+    "cloudflare"
+  ],
   "dependencies": {
     "@erc725/erc725.js": "^0.27.2",
     "@lukso/up-provider": "^0.3.2",
