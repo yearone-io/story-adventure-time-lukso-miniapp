@@ -121,7 +121,7 @@ export function UpProvider({ children }: UpProviderProps) {
         setAccounts(_accounts);
 
         const _chainId = parseInt((await provider.request("eth_chainId")));
-        if (!mounted) return;
+        if (!mounted || _chainId === 0) return;
         setChainId(_chainId);
 
         const _contextAccounts = provider.contextAccounts;
