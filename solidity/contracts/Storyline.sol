@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {LSP8IdentifiableDigitalAsset} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/LSP8IdentifiableDigitalAsset.sol";
-import {LSP8IdentifiableDigitalAssetCore} from "@lukso/lsp8-contracts/contracts/LSP8IdentifiableDigitalAssetCore.sol";
 import {LSP4DigitalAssetMetadata} from "@lukso/lsp-smart-contracts/contracts/LSP4DigitalAssetMetadata/LSP4DigitalAssetMetadata.sol";
 import {_LSP4_TOKEN_TYPE_COLLECTION, _LSP4_METADATA_KEY, _LSP4_CREATORS_ARRAY_KEY, _LSP4_CREATORS_MAP_KEY_PREFIX, _LSP4_TOKEN_SYMBOL_KEY, _LSP4_TOKEN_NAME_KEY} from "@lukso/lsp-smart-contracts/contracts/LSP4DigitalAssetMetadata/LSP4Constants.sol";
 import {LSP8Enumerable} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/extensions/LSP8Enumerable.sol";
@@ -65,8 +64,8 @@ contract Storyline is LSP8Enumerable, LSP8Mintable, LSP8Burnable {
 
     // mint a storyline prompt
     function mint(bytes memory _lsp4MetadataURI, address promptCreator) public {
-        // iterate id
-        LSP8Mintable.mint(owner(), totalSupply() + 1, true, "");
+        bytes32 tokenId = bytes32(totalSupply() + 1);
+        LSP8Mintable.mint(owner(), tokenId, true, "");
         _setDataForTokenId(tokenId, _LSP4_METADATA_KEY, _lsp4MetadataURI);
         // setting the creator
         _setDataForTokenId(tokenId, 
@@ -95,8 +94,9 @@ contract Storyline is LSP8Enumerable, LSP8Mintable, LSP8Burnable {
         address from,
         address to,
         bytes32 tokenId,
+        bool force,
         bytes memory data
-    ) internal virtual override(LSP8Enumerable, LSP8IdentifiableDigitalAssetCore) {
-        LSP8Enumerable._beforeTokenTransfer(from, to, tokenId, data);
+    ) internal virtual override(LSP8Enumerable, LSP8IdentifiableDigitalAsset) {
+        LSP8Enumerable._beforeTokenTransfer(from, to, tokenId, force, data);
     }
 }
