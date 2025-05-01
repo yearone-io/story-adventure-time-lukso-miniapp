@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUpProvider } from "@/components/upProvider";
 import { getContract } from "viem";
 
@@ -36,6 +36,7 @@ const StoryAdventure = () => {
   const [showSwitchNetworkTooltip, setShowSwitchNetworkTooltip] = useState(false);
   const network = supportedNetworks[profileChainId];
   const CONTRACT_ADDRESS = network.contractAddress;
+  const blobUrlsRef = useRef<string[]>([]);
 
   const mysteriousOpenings = [
     "The note on the door simply read: 'Don't turn around.'",
@@ -68,6 +69,13 @@ const StoryAdventure = () => {
     }
   };
 
+    // revoke all blob URLs on unmount
+    useEffect(() => {
+      return () => {
+        blobUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      };
+    }, []);
+
   // Create contract instance when client is available
   const getStoryContract = () => {
     if (!client || !CONTRACT_ADDRESS) return null;
@@ -83,9 +91,7 @@ const StoryAdventure = () => {
     loadStoryHistory();
   }, [profileAddress, publicClient]);
 
-  // Generate new options when story starts or when explicitly requested
   useEffect(() => {
-    // Only generate options when story starts (not on every history change)
     if (storyHistory.length > 0 && storyStarted && currentOptions.length === 0) {
       generateNextOptions();
     }
@@ -151,54 +157,40 @@ const StoryAdventure = () => {
   const generateNextOptions = async () => {
     try {
       setLoading(true);
-      
-      // Clear existing image data
+      // revoke previous blob URLs
+      blobUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      blobUrlsRef.current = [];
       setCurrentImageData([]);
 
-      // Extract just the prompt texts for the LLM
-      const promptHistory = storyHistory.map(item => item.prompt);
-
-      // Call your LLM API to generate the next 3 options
+      const promptHistory = storyHistory.map(i => i.prompt);
       const options = await generateStoryOptions(promptHistory);
-      const imageDataArray = [];
-      
-      // Generate an image for each option
+      const imageUrls: string[] = [];
+
       for (let i = 0; i < options.length; i++) {
-        const prompts = [...promptHistory, options[i]];
-        try {
-          console.log(`Generating image for option ${i+1}...`);
-          // Get the image directly from API
-          const imageBlob = await generatePromptImage(prompts);
-          console.log(`Image blob received for option ${i+1}:`, imageBlob);
-          
-          // Check if the blob is valid
-          if (imageBlob && imageBlob.size > 0) {
-            // Instead of creating a blob URL, convert to data URL
-            const dataUrl = await blobToDataURL(imageBlob);
-            console.log(`Created data URL for option ${i+1}`);
-            imageDataArray.push(dataUrl);
-          } else {
-            console.error(`Empty or invalid blob received for option ${i+1}`);
-            // Use a data URL placeholder
-            imageDataArray.push("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'%3E%3Crect width='400' height='320' fill='%23374151'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%239CA3AF'%3EImage unavailable%3C/text%3E%3C/svg%3E");
-          }
-        } catch (error) {
-          console.error(`Error generating image for option ${i+1}:`, error);
-          // Use a data URL placeholder
-          imageDataArray.push("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'%3E%3Crect width='400' height='320' fill='%23374151'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%239CA3AF'%3EImage unavailable%3C/text%3E%3C/svg%3E");
+        console.log(`Generating image for option ${i+1}...`);
+        const blob = await generatePromptImage([...promptHistory, options[i]]);
+        console.log('Blob received:', blob.size, blob.type);
+        if (blob && blob.size > 0) {
+          const pngBlob = new Blob([blob], { type: 'image/png' });
+          const url = URL.createObjectURL(pngBlob);
+          console.log('Created blob URL:', url);
+          imageUrls.push(url);
+          blobUrlsRef.current.push(url);
+        } else {
+          console.error(`Invalid blob for option ${i+1}`);
+          imageUrls.push("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E");
         }
       }
-      console.log('AHHH')
-      console.log(imageDataArray)
 
       setCurrentOptions(options);
-      setCurrentImageData(imageDataArray);
-      setLoading(false);
+      setCurrentImageData(imageUrls);
     } catch (error) {
-      console.error('Error generating story options:', error);
+      console.error('Error generating options:', error);
+    } finally {
       setLoading(false);
     }
   };
+ 
 
   const startNewStory = async () => {
     if (!initialPromptInput.trim() || !client || !profileAddress || !publicClient) return;
@@ -360,71 +352,34 @@ const StoryAdventure = () => {
   // Render story options with enhanced styling and images
   const renderStoryOptions = () => {
     if (optionSelectionLoading) {
-      return (
-        <div className="col-span-3 flex flex-col items-center justify-center space-y-4 py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-          <p className="text-white/80 text-lg animate-pulse">Recording your choice on the blockchain...</p>
-        </div>
-      );
+      return <div className="col-span-3 flex flex-col items-center py-8">Recording choice...</div>;
     }
-
     return currentOptions.map((option, index) => (
-      <div
-        key={index}
-        className="
-          transform transition-all duration-300
-          hover:scale-105 hover:shadow-lg
-          bg-gradient-to-br from-purple-600/20 to-blue-600/20
-          rounded-xl p-1
-        "
-      >
-        <div className="bg-gray-900/80 rounded-lg p-3 h-full flex flex-col">
-          {/* Image container */}
+      <div key={index} className="p-1 hover:shadow-lg">
+        <div className="bg-gray-900 rounded-lg p-3 flex flex-col h-full">
           <div className="mb-3 h-48 overflow-hidden rounded-lg">
             {currentImageData[index] ? (
-              <img 
-                src={currentImageData[index]} 
-                alt={`Option ${index + 1} visualization`}
+              <img
+                src={currentImageData[index]}
+                alt={`Option ${index+1}`}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Prevent infinite loop by only setting fallback once
-                  if (!e.currentTarget.src.includes("data:image/svg")) {
-                    // Use a data URL for a simple gray placeholder
-                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'%3E%3Crect width='400' height='320' fill='%23374151'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%239CA3AF'%3EImage unavailable%3C/text%3E%3C/svg%3E";
-                  }
+                onError={e => {
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                <div className="animate-pulse text-white/50">Loading image...</div>
-              </div>
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center">Loading image...</div>
             )}
           </div>
-          
-          {/* Option text and button */}
-          <div className="flex-1 flex flex-col justify-between">
-            <p className="text-white mb-3">{option}</p>
-            <button
-              onClick={() => selectStoryOption(index)}
-              disabled={transactionPending}
-              className="
-                w-full
-                bg-gradient-to-r from-purple-600 to-blue-600
-                text-white font-bold py-2
-                rounded-lg
-                hover:from-purple-700 hover:to-blue-700
-                transition-all duration-300
-                disabled:opacity-50 disabled:cursor-not-allowed
-                mt-auto
-              "
-            >
-              Choose This Path
-            </button>
-          </div>
+          <p className="text-white mb-2">{option}</p>
+          <button onClick={() => selectStoryOption(index)} disabled={transactionPending} className="bg-purple-600 text-white py-2 rounded">
+            Choose This Path
+          </button>
         </div>
       </div>
     ));
   };
+
 
   if(!profileAddress) {
     //return an error message, as this can only be used in a Lukso mini app
