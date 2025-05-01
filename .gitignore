@@ -2,6 +2,19 @@
 
 # dependencies
 /node_modules
+/solidity/node_modules
+# Hardhat files
+/solidity/cache
+/solidity/artifacts
+
+# TypeChain files
+/solidity/typechain
+/solidity/typechain-types
+
+# solidity-coverage files
+/solidity/coverage
+/solidity/coverage.json
+
 /.pnp
 .pnp.*
 .yarn/*
