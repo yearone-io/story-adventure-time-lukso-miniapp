@@ -1,38 +1,67 @@
-const axios = require('axios');
-const FormData = require('form-data');
+import { ResponseData } from "@/types/api";
+import { AxiosResponse } from "axios";
+
+const axios = require("axios");
+const FormData = require("form-data");
 
 export const pinFileToIPFS = async (
-    fileName: string,
-    blob: Blob
-  ) => {
+  fileName: string,
+  blob: Blob
+) => {
 
-    try {
-      const tokenResponse = await axios.post('/api/story/generate-pinata-token');
+  try {
+    const tokenResponse = await axios.post("/api/story/generate-pinata-token");
 
-      if (tokenResponse.data.error) {
-        throw new Error(tokenResponse.data.error);
-      }
+    if (tokenResponse.data.error) {
+      throw new Error(tokenResponse.data.error);
+    }
 
-      const file = new File([blob], fileName)
-      const data = new FormData();
-      data.append("file", file);
+    const file = new File([blob], fileName);
+    const data = new FormData();
+    data.append("file", file);
 
-      const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-        method: "POST",
+    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokenResponse.data.jwt}`
+      },
+      body: data
+    });
+    const resData = (await res.json()) as { IpfsHash: string };
+    console.log(resData);
+
+    return resData.IpfsHash;
+  } catch (error) {
+    console.error("Failed to pin file:", error);
+    throw error;
+  }
+};
+
+export const pinJsonToIpfs = async (data: string) => {
+  const tokenResponse = (await axios.post(
+    '/api/generate-pinata-token'
+  )) as AxiosResponse<ResponseData>;
+
+  if (tokenResponse.data.error) {
+    throw new Error(tokenResponse.data.error);
+  }
+
+  try {
+    const res = await axios.post(
+      'https://api.pinata.cloud/pinning/pinJSONToIPFS',
+      data,
+      {
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${tokenResponse.data.jwt}`,
         },
-        body: data,
-      });
-      const resData = (await res.json()) as { IpfsHash: string} ;
-      console.log(resData);
-
-      return resData.IpfsHash;
-    } catch (error) {
-      console.error('Failed to pin file:', error);
-      throw error;
-    }
-  };
+      }
+    );
+    return res.data.IpfsHash;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 // export async function getImageFromIPFS(
 //   ipfsUrl: string,
