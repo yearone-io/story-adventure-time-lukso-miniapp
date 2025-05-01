@@ -30,8 +30,9 @@ export async function POST(request: Request) {
 
     // 5. Now TypeScript knows that data.options is string[]
     if (Array.isArray(data.options) && data.options.length >= 3) {
+      const options = JSON.stringify(data.options.slice(0, 3));      
       return new Response(
-        JSON.stringify(data.options.slice(0, 3)),
+        options,
         {
           status: 200,
           headers: { "Content-Type": "application/json" },

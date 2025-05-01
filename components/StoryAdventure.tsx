@@ -5,7 +5,7 @@ import { useUpProvider } from "@/components/upProvider";
 import { getContract } from "viem";
 
 // This would be your LLM API service
-import { generateStoryOptions } from "@/services/llm-service";
+import { generatePromptImage, generateStoryOptions } from "@/services/llm-service";
 
 // Import ABI of your deployed contract
 import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
@@ -27,6 +27,7 @@ const StoryAdventure = () => {
   const [loading, setLoading] = useState(false);
   const [storyHistory, setStoryHistory] = useState<StoryPrompt[]>([]);
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
+  const [currentImageData, setCurrentImageData] = useState<string[]>([]); // Using data URLs instead of blob URLs
   const [initialPromptInput, setInitialPromptInput] = useState('');
   const [storyStarted, setStoryStarted] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
@@ -37,7 +38,7 @@ const StoryAdventure = () => {
   const CONTRACT_ADDRESS = network.contractAddress;
 
   const mysteriousOpenings = [
-    "The note on the door simply read: 'Don’t turn around.'",
+    "The note on the door simply read: 'Don't turn around.'",
     "A single candle flickered in the abandoned house, though no one had lived there for years.",
     "She woke up in an unfamiliar room, with no memory of how she got there.",
     "The clock struck midnight, and the phone began to ring—a call from someone who had died a year ago.",
@@ -47,16 +48,16 @@ const StoryAdventure = () => {
     "Every night, at exactly 3:13 AM, the door to my closet creaks open.",
     "The letter was signed with my name, but I had never written it.",
     "A shadow moved across the window, but I was on the 12th floor.",
-    "There was a new grave in the cemetery… with today’s date on the headstone.",
+    "There was a new grave in the cemetery… with today's date on the headstone.",
     "He had been gone for five years, yet he walked into the café as if nothing had happened.",
-    "A stranger on the train whispered, ‘They’re coming for you tonight.’",
+    "A stranger on the train whispered, 'They're coming for you tonight.'",
     "The whispers in the attic grew louder every night, though I lived alone.",
     "She had seen her own reflection blink at her.",
     "The town had vanished from the map overnight, as if it had never existed.",
     "I received a text from my sister, but she had disappeared a decade ago.",
-    "The radio turned on by itself, playing a song that hadn’t been released yet.",
-    "As I blew out my birthday candles, someone whispered, ‘Make your last wish count.’",
-    "The painting in the hallway had changed—now the woman’s eyes were looking directly at me."
+    "The radio turned on by itself, playing a song that hadn't been released yet.",
+    "As I blew out my birthday candles, someone whispered, 'Make your last wish count.'",
+    "The painting in the hallway had changed—now the woman's eyes were looking directly at me."
   ];
 
   const handleCopy = async () => {
@@ -82,12 +83,13 @@ const StoryAdventure = () => {
     loadStoryHistory();
   }, [profileAddress, publicClient]);
 
-  // Generate new options whenever story history changes
+  // Generate new options when story starts or when explicitly requested
   useEffect(() => {
-    if (storyHistory.length > 0 && storyStarted) {
+    // Only generate options when story starts (not on every history change)
+    if (storyHistory.length > 0 && storyStarted && currentOptions.length === 0) {
       generateNextOptions();
     }
-  }, [storyHistory, storyStarted]);
+  }, [storyStarted]);
 
   const loadStoryHistory = async () => {
     try {
@@ -136,17 +138,61 @@ const StoryAdventure = () => {
     }
   };
 
+  // Convert a Blob to a base64 data URL
+  const blobToDataURL = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const generateNextOptions = async () => {
     try {
       setLoading(true);
+      
+      // Clear existing image data
+      setCurrentImageData([]);
 
       // Extract just the prompt texts for the LLM
       const promptHistory = storyHistory.map(item => item.prompt);
 
       // Call your LLM API to generate the next 3 options
       const options = await generateStoryOptions(promptHistory);
-      setCurrentOptions(options);
+      const imageDataArray = [];
+      
+      // Generate an image for each option
+      for (let i = 0; i < options.length; i++) {
+        const prompts = [...promptHistory, options[i]];
+        try {
+          console.log(`Generating image for option ${i+1}...`);
+          // Get the image directly from API
+          const imageBlob = await generatePromptImage(prompts);
+          console.log(`Image blob received for option ${i+1}:`, imageBlob);
+          
+          // Check if the blob is valid
+          if (imageBlob && imageBlob.size > 0) {
+            // Instead of creating a blob URL, convert to data URL
+            const dataUrl = await blobToDataURL(imageBlob);
+            console.log(`Created data URL for option ${i+1}`);
+            imageDataArray.push(dataUrl);
+          } else {
+            console.error(`Empty or invalid blob received for option ${i+1}`);
+            // Use a data URL placeholder
+            imageDataArray.push("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'%3E%3Crect width='400' height='320' fill='%23374151'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%239CA3AF'%3EImage unavailable%3C/text%3E%3C/svg%3E");
+          }
+        } catch (error) {
+          console.error(`Error generating image for option ${i+1}:`, error);
+          // Use a data URL placeholder
+          imageDataArray.push("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'%3E%3Crect width='400' height='320' fill='%23374151'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%239CA3AF'%3EImage unavailable%3C/text%3E%3C/svg%3E");
+        }
+      }
+      console.log('AHHH')
+      console.log(imageDataArray)
 
+      setCurrentOptions(options);
+      setCurrentImageData(imageDataArray);
       setLoading(false);
     } catch (error) {
       console.error('Error generating story options:', error);
@@ -167,11 +213,6 @@ const StoryAdventure = () => {
     console.log("chainId", chainId, profileChainId);
     try {
       setTransactionPending(true);
-      // Get image based on prompt
-      // const generateImage = await generatePromptImage([initialPromptInput.trim()]);
-      // console.log("generateImage", generateImage);
-      // const imageIpfsHash = await pinFileToIPFS("test", generateImage);
-      // console.log("imageIpfsHash", imageIpfsHash);
 
       // Call contract to start a new story
       const hash = await client.writeContract({
@@ -205,8 +246,9 @@ const StoryAdventure = () => {
     }
   };
 
-  const selectStoryOption = async (optionText: string) => {
-    if (!client || !profileAddress) return;
+  const selectStoryOption = async (optionIndex: number) => {
+    const optionText = currentOptions[optionIndex];
+    if (!client || !profileAddress || !optionText) return;
 
     if(!walletConnected) {
       //prompt to connect
@@ -224,12 +266,6 @@ const StoryAdventure = () => {
     try {
       setTransactionPending(true);
       setOptionSelectionLoading(true);
-
-      // Get image based on prompt
-      // const generateImage = await generatePromptImage([initialPromptInput.trim()]);
-      // console.log("generateImage", generateImage);
-      // const imageIpfsHash = await pinFileToIPFS("test", generateImage);
-      // console.log("imageIpfsHash", imageIpfsHash);
 
       // Call contract to add a new story prompt
       const hash = await client.writeContract({
@@ -253,7 +289,11 @@ const StoryAdventure = () => {
 
       // Update local state
       setStoryHistory([...storyHistory, newStoryPrompt]);
+      
+      // Clear options
       setCurrentOptions([]);
+      setCurrentImageData([]);
+      
       setTransactionPending(false);
       setOptionSelectionLoading(false);
     } catch (error: any) {
@@ -301,6 +341,7 @@ const StoryAdventure = () => {
       // Update local state
       setStoryHistory([]);
       setCurrentOptions([]);
+      setCurrentImageData([]);
       setTransactionPending(false);
       setOptionSelectionLoading(false);
       setLoading(false);
@@ -316,8 +357,7 @@ const StoryAdventure = () => {
     }
   };
 
-
-  // Render story options with enhanced styling
+  // Render story options with enhanced styling and images
   const renderStoryOptions = () => {
     if (optionSelectionLoading) {
       return (
@@ -338,21 +378,50 @@ const StoryAdventure = () => {
           rounded-xl p-1
         "
       >
-        <button
-          onClick={() => selectStoryOption(option)}
-          disabled={transactionPending}
-          className="
-            w-full h-full
-            bg-gray-900/80 text-white
-            rounded-lg p-3
-            hover:bg-gradient-to-r
-            hover:from-purple-700 hover:to-blue-700
-            transition-all duration-300
-            disabled:opacity-50 disabled:cursor-not-allowed
-          "
-        >
-          {option}
-        </button>
+        <div className="bg-gray-900/80 rounded-lg p-3 h-full flex flex-col">
+          {/* Image container */}
+          <div className="mb-3 h-48 overflow-hidden rounded-lg">
+            {currentImageData[index] ? (
+              <img 
+                src={currentImageData[index]} 
+                alt={`Option ${index + 1} visualization`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Prevent infinite loop by only setting fallback once
+                  if (!e.currentTarget.src.includes("data:image/svg")) {
+                    // Use a data URL for a simple gray placeholder
+                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='320' viewBox='0 0 400 320'%3E%3Crect width='400' height='320' fill='%23374151'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%239CA3AF'%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                <div className="animate-pulse text-white/50">Loading image...</div>
+              </div>
+            )}
+          </div>
+          
+          {/* Option text and button */}
+          <div className="flex-1 flex flex-col justify-between">
+            <p className="text-white mb-3">{option}</p>
+            <button
+              onClick={() => selectStoryOption(index)}
+              disabled={transactionPending}
+              className="
+                w-full
+                bg-gradient-to-r from-purple-600 to-blue-600
+                text-white font-bold py-2
+                rounded-lg
+                hover:from-purple-700 hover:to-blue-700
+                transition-all duration-300
+                disabled:opacity-50 disabled:cursor-not-allowed
+                mt-auto
+              "
+            >
+              Choose This Path
+            </button>
+          </div>
+        </div>
       </div>
     ));
   };
