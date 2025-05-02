@@ -357,24 +357,32 @@ const StoryAdventure = () => {
     return currentOptions.map((option, index) => (
       <div key={index} className="p-1 hover:shadow-lg">
         <div className="bg-gray-900 rounded-lg p-3 flex flex-col h-full">
-          {/* <div className='flex'>  */}
-          <p className="text-white mb-2">{option}</p>
-          <div className="mb-3 h-48 overflow-hidden rounded-lg">
-            {currentImageData[index] ? (
-              <img
-                src={currentImageData[index]}
-                alt={`Option ${index+1}`}
-                className="w-full h-full object-cover"
-                onError={e => {
-                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-800 flex items-center justify-center">Loading image...</div>
-            )}
-          {/* </div> */}
+          <div className="flex justify-between items-start mb-3 gap-4">
+            {/* Text content on the left */}
+            <p className="text-white flex-1">{option}</p>
+            
+            {/* Image on the right */}
+            <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+              {currentImageData[index] ? (
+                <img
+                  src={currentImageData[index]}
+                  alt={`Option ${index+1}`}
+                  className="w-full h-full object-cover"
+                  onError={e => {
+                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-800 flex items-center justify-center text-xs">Loading...</div>
+              )}
+            </div>
           </div>
-          <button onClick={() => selectStoryOption(index)} disabled={transactionPending} className="bg-purple-600 text-white py-2 rounded">
+          
+          <button 
+            onClick={() => selectStoryOption(index)} 
+            disabled={transactionPending} 
+            className="bg-purple-600 text-white py-2 rounded mt-auto"
+          >
             Choose This Path
           </button>
         </div>
