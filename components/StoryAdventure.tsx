@@ -200,7 +200,7 @@ const StoryAdventure = () => {
       console.log("options", options);
 
       // Create an array of promises for parallel image generation
-      const imageBlobs = [];
+      const imageBlobs: Blob[] = [];
       const imagePromises = options.map((option, i) => {
         return generatePromptImage([option])
           .then(blob => {
@@ -266,12 +266,10 @@ const StoryAdventure = () => {
           title: `Story ${timestamp}`,
           description: initialPromptInput,
           urls: [],
-          icon: initialPromptImage,
           iconWidth: 1024,
           iconHeight: 1024,
           iconIpfsHash: ipfsHash,
           imageIpfsHash: ipfsHash,
-          image: initialPromptImage,
           imageHeight: 1024,
           imageWidth: 1024,
         }
@@ -343,12 +341,10 @@ const StoryAdventure = () => {
           title: `Prompt ${timestamp}`,
           description: optionText,
           urls: [],
-          icon: optionImage,
           iconWidth: 1024,
           iconHeight: 1024,
           iconIpfsHash: ipfsHash,
           imageIpfsHash: ipfsHash,
-          image: optionImage,
           imageHeight: 1024,
           imageWidth: 1024,
         }

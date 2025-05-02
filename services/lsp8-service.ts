@@ -36,7 +36,7 @@ async function createMetadata(
 ): Promise<string> {
   const icons: Image[] = [];
   const images: Image[] = [];
-  if (data.icon && data.iconIpfsHash) {
+  if (data.iconIpfsHash) {
     icons.push(
       await processImageData(
         ipfsGateway,
@@ -46,7 +46,7 @@ async function createMetadata(
       )
     );
   }
-  if (data.image && data.imageIpfsHash) {
+  if (data.imageIpfsHash) {
     images.push(
       await processImageData(
         ipfsGateway,
