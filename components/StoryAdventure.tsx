@@ -45,6 +45,7 @@ const StoryAdventure = () => {
   const [storyHistory, setStoryHistory] = useState<StoryPrompt[]>([]);
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [currentImageData, setCurrentImageData] = useState<string[]>([]);
+  const [imageBlobs, setImageBlobs] = useState<Blob[]>([]);
   const [initialPromptInput, setInitialPromptInput] = useState('');
   const [storyStarted, setStoryStarted] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
@@ -106,8 +107,9 @@ const StoryAdventure = () => {
   const loadStoryHistory = async () => {
     try {
       setLoading(true);
+      console.log("profile address", profileAddress);
 
-      if (!CONTRACT_ADDRESS || !connectedAddress) {
+      if (!CONTRACT_ADDRESS) {
         console.warn('Contract not available');
         setLoading(false);
         return;
@@ -118,7 +120,7 @@ const StoryAdventure = () => {
         address: CONTRACT_ADDRESS,
         abi: AdventureTimeABI,
         functionName: 'tokenIdsOf',
-        args: [connectedAddress],
+        args: [profileAddress],
         account: profileAddress
       }) as string[];
 
@@ -198,6 +200,7 @@ const StoryAdventure = () => {
       console.log("options", options);
 
       // Create an array of promises for parallel image generation
+      const imageBlobs = [];
       const imagePromises = options.map((option, i) => {
         return generatePromptImage([option])
           .then(blob => {
@@ -205,6 +208,7 @@ const StoryAdventure = () => {
               const pngBlob = new Blob([blob], { type: 'image/png' });
               const url = URL.createObjectURL(pngBlob);
               console.log('Created blob URL:', url);
+              imageBlobs.push(blob);
               return url;
             } else {
               console.error(`Invalid blob for option ${i+1}`);
@@ -216,6 +220,8 @@ const StoryAdventure = () => {
             return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
           });
       });
+
+      setImageBlobs(imageBlobs);
 
       // Wait for all image generation promises to resolve
       const imageUrls = await Promise.all(imagePromises);
@@ -295,7 +301,8 @@ const StoryAdventure = () => {
 
   const selectStoryOption = async (optionIndex: number) => {
     const optionText = currentOptions[optionIndex];
-    if (!client || !profileAddress || !optionText) return;
+    const optionImage = imageBlobs[optionIndex];
+    if (!client || !profileAddress || !optionText || !optionImage) return;
 
     if(!walletConnected) {
       //prompt to connect
@@ -314,16 +321,15 @@ const StoryAdventure = () => {
       setTransactionPending(true);
       setOptionSelectionLoading(true);
 
-      const nextPromptImage= await generatePromptImage([optionText]);
       const timestamp = Math.floor(Date.now() / 1000);
-      const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, nextPromptImage);
+      const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, optionImage);
 
       // Call contract to add a new story prompt
       const existingStories = await publicClient.readContract({
         address: CONTRACT_ADDRESS,
         abi: AdventureTimeABI,
         functionName: 'tokenIdsOf',
-        args: [connectedAddress],
+        args: [profileAddress],
         account: profileAddress
       }) as string[];
 
@@ -337,12 +343,12 @@ const StoryAdventure = () => {
           title: `Prompt ${timestamp}`,
           description: optionText,
           urls: [],
-          icon: nextPromptImage,
+          icon: optionImage,
           iconWidth: 1024,
           iconHeight: 1024,
           iconIpfsHash: ipfsHash,
           imageIpfsHash: ipfsHash,
-          image: nextPromptImage,
+          image: optionImage,
           imageHeight: 1024,
           imageWidth: 1024,
         }
