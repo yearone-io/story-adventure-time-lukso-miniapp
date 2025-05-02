@@ -6,9 +6,10 @@ import {AdventureTimeHelpers} from "./AdventureTimeHelpers.sol";
 import {LSP8IdentifiableDigitalAsset} from "@lukso/lsp8-contracts/contracts/LSP8IdentifiableDigitalAsset.sol";
 import {LSP8Burnable} from "@lukso/lsp8-contracts/contracts/extensions/LSP8Burnable.sol";
 import {_LSP4_TOKEN_TYPE_COLLECTION, _LSP4_METADATA_KEY, _LSP4_CREATORS_ARRAY_KEY, _LSP4_CREATORS_MAP_KEY_PREFIX} from "@lukso/lsp-smart-contracts/contracts/LSP4DigitalAssetMetadata/LSP4Constants.sol";
+import {_INTERFACEID_LSP0} from "@lukso/lsp0-contracts/contracts/LSP0Constants.sol";
 import {LSP8Enumerable} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/extensions/LSP8Enumerable.sol";
 import {_LSP8_TOKENID_FORMAT_ADDRESS} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/LSP8Constants.sol";
-import "hardhat/console.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 contract AdventureTime is LSP8Enumerable, LSP8Burnable {
     event StorylineCreated(string storyName, address storylineAddress, address vibeMaster);
@@ -26,6 +27,16 @@ contract AdventureTime is LSP8Enumerable, LSP8Burnable {
             _LSP8_TOKENID_FORMAT_ADDRESS
         )
     {
+
+        bytes memory creatorStandard = hex"0000000000000000000000000000000000000000";
+        if (
+            ERC165Checker.supportsERC165InterfaceUnchecked(
+                contractOwner,
+                _INTERFACEID_LSP0
+            )
+        ) {
+            creatorStandard = hex"24871b3d00000000000000000000000000000000";
+        }
         _setData(
             _LSP4_CREATORS_ARRAY_KEY,
             hex"00000000000000000000000000000001"
@@ -40,7 +51,7 @@ contract AdventureTime is LSP8Enumerable, LSP8Burnable {
                     contractOwner
                 )
             ),
-            hex"24871b3d00000000000000000000000000000000"
+            creatorStandard
         );
     }
 
@@ -65,9 +76,7 @@ contract AdventureTime is LSP8Enumerable, LSP8Burnable {
 
         // Emit the event with the address of the newly deployed contract
         emit StorylineCreated(storylineName, storylineAddress, vibeMaster);
-
-        console.log("Storyline minted by Adventure Time");
-        console.logBytes32(bytes32(uint256(uint160(storylineAddress))));
+        
         _mint(vibeMaster, bytes32(uint256(uint160(storylineAddress))), true, "");
     }
 

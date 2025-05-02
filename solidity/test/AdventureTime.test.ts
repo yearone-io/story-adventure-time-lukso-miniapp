@@ -126,16 +126,11 @@ describe("AdventureTime Contracts", function () {
       expect(totalSupply).to.equal(2);
     });
 
-    it.only("should correctly set creator metadata", async function () {
-      const creatorsArray: string = await adventureTime.getData(LSP4DataKeys.LSP4CreatorsArrayLength);
-      expect(ethers.getBigInt(creatorsArray)).to.equal(1n);
-
-      const creatorIndex: string = ethers.concat([
-        LSP4DataKeys.LSP4CreatorsArrayLength.slice(0, 34),
-        ethers.zeroPadBytes("0x0000", 16),
-      ]);
-      const creator: string = await adventureTime.getData(creatorIndex);
-      expect(creator).to.equal(ethers.AbiCoder.defaultAbiCoder().encode(["address"], [owner.address]));
+    it("should correctly set creator metadata", async function () {
+      const creatorStatus: string = await adventureTime.getData(LSP4DataKeys['LSP4CreatorsMap'] + owner.address.replace("0x", ""));
+      expect(creatorStatus).to.equal("0x0000000000000000000000000000000000000000");
+      const creatorsLength: string = await adventureTime.getData(LSP4DataKeys['LSP4Creators[]'].length);
+      expect(creatorsLength).to.equal("0x00000000000000000000000000000001");
     });
   });
 
@@ -158,23 +153,26 @@ describe("AdventureTime Contracts", function () {
         ["string", "address", "address"],
         event.data
       );
-
       const deployedStoryline: Storyline = Storyline__factory.connect(storylineAddress, owner);
-      expect(await deployedStoryline.getData(LSP4DataKeys.LSP4TokenName)).to.equal(STORYLINE_NAME);
-      expect(await deployedStoryline.getData(LSP4DataKeys.LSP4TokenSymbol)).to.equal(STORYLINE_SYMBOL);
+      const rawName = await deployedStoryline.getData(LSP4DataKeys.LSP4TokenName);
+      const rawSymbol = await deployedStoryline.getData(LSP4DataKeys.LSP4TokenSymbol);
+
+      expect(decodeValueType("string", rawName)).to.equal(STORYLINE_NAME);
+      expect(decodeValueType("string", rawSymbol)).to.equal(STORYLINE_SYMBOL);
       expect(await deployedStoryline.owner()).to.equal(vibeMaster.address);
     });
   });
 
   describe("Storyline", function () {
     it("should deploy with correct parameters and mint initial prompt", async function () {
-      expect(await storyline.getData(LSP4DataKeys.LSP4TokenName)).to.equal(STORYLINE_NAME);
-      expect(await storyline.getData(LSP4DataKeys.LSP4TokenSymbol)).to.equal(STORYLINE_SYMBOL);
+      const rawName = await storyline.getData(LSP4DataKeys.LSP4TokenName);
+      const rawSymbol = await storyline.getData(LSP4DataKeys.LSP4TokenSymbol);
+      expect(decodeValueType("string", rawName)).to.equal(STORYLINE_NAME);
+      expect(decodeValueType("string", rawSymbol)).to.equal(STORYLINE_SYMBOL);
       expect(await storyline.owner()).to.equal(vibeMaster.address);
       expect(await storyline.isMintingEnabled()).to.equal(true);
       expect(await storyline.isFollowerRestrictionEnabled()).to.equal(false);
       expect(await storyline.lsp26FollowerSystem()).to.equal(await mockLSP26.getAddress());
-
       const tokenIds: string[] = await storyline.tokenIdsOf(vibeMaster.address);
       expect(tokenIds.length).to.equal(1);
       expect(tokenIds[0]).to.equal(ethers.toBeHex(1, 32));
@@ -192,11 +190,13 @@ describe("AdventureTime Contracts", function () {
       const tokenIds: string[] = await storyline.tokenIdsOf(contributor1.address);
       expect(tokenIds.length).to.equal(1);
       expect(tokenIds[0]).to.equal(ethers.toBeHex(2, 32));
+      const totalSupply: number = Number(await storyline.totalSupply());
+      expect(totalSupply).to.equal(2);
     });
 
     it("should revert minting when disabled", async function () {
       await storyline.connect(vibeMaster).disableMinting();
-      await expect(storyline.connect(contributor1).mint(METADATA_URI)).to.be.revertedWith("Minting is disabled");
+      await expect(storyline.connect(contributor1).mint(METADATA_URI)).to.be.revertedWithCustomError(storyline, "StoryHasBeenFinalized");
     });
 
     it("should enforce follower restriction when enabled", async function () {
@@ -221,8 +221,9 @@ describe("AdventureTime Contracts", function () {
       const restrictedStoryline = Storyline__factory.connect(storylineAddress, owner);
 
       // Contributor1 is not following vibeMaster
-      await expect(restrictedStoryline.connect(contributor1).mint(METADATA_URI)).to.be.revertedWith(
-        "Only profiles followed by the creator can contribute"
+      await expect(restrictedStoryline.connect(contributor1).mint(METADATA_URI)).to.be.revertedWithCustomError(
+        restrictedStoryline,
+        "ContributorNotAllowedByVibeMaster"
       );
 
       // Set contributor1 as following vibeMaster
@@ -255,21 +256,17 @@ describe("AdventureTime Contracts", function () {
     it("should correctly set prompt creator metadata", async function () {
       await storyline.connect(contributor1).mint(METADATA_URI);
       const tokenIds: string[] = await storyline.tokenIdsOf(contributor1.address);
-
-      const creatorsArray: string = await storyline.getDataForTokenId(
+      
+      const creatorStatus: string = await storyline.getDataForTokenId(
         tokenIds[0],
-        LSP4DataKeys.LSP4CreatorsArrayLength
+        LSP4DataKeys['LSP4CreatorsMap'] + contributor1.address.replace("0x", "")
       );
-      expect(ethers.getBigInt(creatorsArray)).to.equal(1n);
-
-      const creatorIndex: string = ethers.concat([
-        LSP4DataKeys.LSP4CreatorsArrayLength.slice(0, 34),
-        ethers.zeroPadBytes("0x0000", 16),
-      ]);
-      const creator: string = await storyline.getDataForTokenId(tokenIds[0], creatorIndex);
-      expect(creator).to.equal(
-        ethers.AbiCoder.defaultAbiCoder().encode(["address"], [contributor1.address])
+      expect(creatorStatus).to.equal("0x0000000000000000000000000000000000000000");
+      const creatorsLength: string = await storyline.getDataForTokenId(
+        tokenIds[0],
+        LSP4DataKeys['LSP4Creators[]'].length
       );
+      expect(creatorsLength).to.equal("0x00000000000000000000000000000001");
     });
 
     it("should allow owner to update LSP26 address", async function () {

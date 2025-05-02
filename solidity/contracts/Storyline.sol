@@ -3,12 +3,13 @@ pragma solidity ^0.8.24;
 
 import {LSP8IdentifiableDigitalAsset} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/LSP8IdentifiableDigitalAsset.sol";
 import {_LSP4_TOKEN_TYPE_COLLECTION, _LSP4_METADATA_KEY, _LSP4_CREATORS_ARRAY_KEY, _LSP4_CREATORS_MAP_KEY_PREFIX, _LSP4_TOKEN_SYMBOL_KEY, _LSP4_TOKEN_NAME_KEY} from "@lukso/lsp-smart-contracts/contracts/LSP4DigitalAssetMetadata/LSP4Constants.sol";
+import {_INTERFACEID_LSP0} from "@lukso/lsp0-contracts/contracts/LSP0Constants.sol";
 import {LSP8Enumerable} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/extensions/LSP8Enumerable.sol";
 import {LSP8Burnable} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/extensions/LSP8Burnable.sol";
 import {LSP8IdentifiableDigitalAsset} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/LSP8IdentifiableDigitalAsset.sol";
 import {_LSP8_TOKENID_FORMAT_NUMBER} from "@lukso/lsp8-contracts/contracts/LSP8Constants.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 // Interface to interact with LSP26 Follower System
 interface ILSP26FollowerSystem {
@@ -16,6 +17,8 @@ interface ILSP26FollowerSystem {
 }
 
 contract Storyline is LSP8Enumerable, LSP8Burnable {
+    error StoryHasBeenFinalized();
+    error ContributorNotAllowedByVibeMaster();
     bool public isMintingEnabled = true;
     uint256 private _nextTokenId;
     address public lsp26FollowerSystem;
@@ -40,6 +43,16 @@ contract Storyline is LSP8Enumerable, LSP8Burnable {
         )
         Ownable() 
     {
+        bytes memory creatorStandard = hex"0000000000000000000000000000000000000000";
+        if (
+            ERC165Checker.supportsERC165InterfaceUnchecked(
+                _creator,
+                _INTERFACEID_LSP0
+            )
+        ) {
+            creatorStandard = hex"24871b3d00000000000000000000000000000000";
+        }
+        lsp26FollowerSystem = followerSystemContract;
         lsp26 = ILSP26FollowerSystem(followerSystemContract);
         isFollowerRestrictionEnabled = _isFollowerRestrictionEnabled;
         _setData(_LSP4_METADATA_KEY, _lsp4MetadataURI);
@@ -58,7 +71,7 @@ contract Storyline is LSP8Enumerable, LSP8Burnable {
                     _creator
                 )
             ),
-            hex"24871b3d00000000000000000000000000000000"
+            creatorStandard
         );
 
         // Mint the first prompt
@@ -80,20 +93,28 @@ contract Storyline is LSP8Enumerable, LSP8Burnable {
                     _creator
                 )
             ),
-            hex"24871b3d00000000000000000000000000000000"
+            creatorStandard
         );
         _nextTokenId += 1;
     }
 
     // mint a storyline prompt
     function mint(bytes memory _lsp4MetadataURI) public {
-        require(isMintingEnabled, "Minting is disabled");
-        if (isFollowerRestrictionEnabled) {
+        bytes memory creatorStandard = hex"0000000000000000000000000000000000000000";
+        if (
+            ERC165Checker.supportsERC165InterfaceUnchecked(
+                msg.sender,
+                _INTERFACEID_LSP0
+            )
+        ) {
+            creatorStandard = hex"24871b3d00000000000000000000000000000000";
+        }
+        if (!isMintingEnabled) {
+            revert StoryHasBeenFinalized();
+        }
+        if (isFollowerRestrictionEnabled && !lsp26.isFollowing(owner(), msg.sender)) {
             // Check if the owner follows the contributor
-            require(
-                lsp26.isFollowing(owner(), msg.sender),
-                "Only profiles followed by the creator can contribute"
-            );
+            revert ContributorNotAllowedByVibeMaster();
         }
         bytes32 tokenId = bytes32(_nextTokenId);
         _mint(msg.sender, tokenId, true, "");
@@ -113,7 +134,7 @@ contract Storyline is LSP8Enumerable, LSP8Burnable {
                     msg.sender
                 )
             ),
-            hex"24871b3d00000000000000000000000000000000"
+            creatorStandard
         );
         _nextTokenId += 1;
     }
