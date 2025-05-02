@@ -96,17 +96,6 @@ const StoryAdventure = () => {
       };
     }, []);
 
-  // Create contract instance when client is available
-  const getStoryContract = () => {
-    if (!client || !CONTRACT_ADDRESS) return null;
-
-    return getContract({
-      address: CONTRACT_ADDRESS,
-      abi: StoryAdventureABI,
-      client: publicClient,
-    });
-  };
-
   useEffect(() => {
     loadStoryHistory();
   }, [profileAddress, publicClient]);
@@ -121,13 +110,11 @@ const StoryAdventure = () => {
     try {
       setLoading(true);
 
-      const contract = getStoryContract();
-      if (!contract) {
-        console.error('Contract not available');
+      if (!CONTRACT_ADDRESS || !connectedAddress) {
+        console.warn('Contract not available');
         setLoading(false);
         return;
       }
-      console.log("xxx000",CONTRACT_ADDRESS,connectedAddress, profileAddress);
 
       // Check if user has a story
       const existingStories = await publicClient.readContract({
