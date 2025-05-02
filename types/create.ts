@@ -10,5 +10,4 @@ export interface CreateFormData {
   image: File | null;
   imageHeight: number | null;
   imageWidth: number | null;
-  by: string; // Creator address
 }

@@ -39,7 +39,7 @@ export const pinFileToIPFS = async (
 
 export const pinJsonToIpfs = async (data: string) => {
   const tokenResponse = (await axios.post(
-    '/api/generate-pinata-token'
+    '/api/story/generate-pinata-token'
   )) as AxiosResponse<ResponseData>;
 
   if (tokenResponse.data.error) {

@@ -9,13 +9,33 @@ import { generatePromptImage, generateStoryOptions } from "@/services/llm-servic
 
 // Import ABI of your deployed contract
 import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
+import AdventureTimeABIFile from '../contracts/AdventureTime.json';
+import StoryLineABIFile from '../contracts/StoryLineABI.json';
 import ConnectWalletExplainer from "@/components/ConnectWalletExplainer";
 import { supportedNetworks } from "@/config/networks";
 import SwitchNetworkExplainer from "@/components/SwitchNetworkExplainer";
 import StoryLine from "@/components/StoryLine";
 import { StoryPrompt } from "@/types/story";
 import { IoReload } from "react-icons/io5";
+import { mintStory } from "@/services/lsp8-service";
+import { pinFileToIPFS } from "@/services/ipfs";
+import ERC725 from '@erc725/erc725.js';
+import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
 const StoryAdventureABI = StoryAdventureABIFile.abi;
+const AdventureTimeABI = AdventureTimeABIFile;
+const StoryLineABI = StoryLineABIFile;
+import { ethers } from "ethers";
+import { fetchLSP4Metadata } from "@/services/lsp4-service";
+
+const lsp4MetadataSchema = [
+  {
+    name: 'LSP4Metadata',
+    key: ERC725YDataKeys.LSP4['LSP4Metadata'],
+    keyType: 'Singleton',
+    valueType: 'bytes',
+    valueContent: 'VerifiableURI',
+  },
+];
 
 const StoryAdventure = () => {
   const { client, publicClient, accounts, contextAccounts, walletConnected, chainId, profileChainId } =
@@ -107,31 +127,70 @@ const StoryAdventure = () => {
         setLoading(false);
         return;
       }
+      console.log("xxx000",CONTRACT_ADDRESS,connectedAddress, profileAddress);
 
       // Check if user has a story
-      const hasStory = await publicClient.readContract({
+      const existingStories = await publicClient.readContract({
         address: CONTRACT_ADDRESS,
-        abi: StoryAdventureABI,
-        functionName: 'hasStory',
+        abi: AdventureTimeABI,
+        functionName: 'tokenIdsOf',
+        args: [connectedAddress],
         account: profileAddress
-      });
+      }) as string[];
 
-      if (hasStory) {
+      if (existingStories.length > 0) {
         // Get story history from the contract
-        const storyData = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: StoryAdventureABI,
-          functionName: 'getStoryHistory',
+        const storyPrompts = await publicClient.readContract({
+          address: existingStories[existingStories.length - 1].replace("0x000000000000000000000000", "0x") as `0x${string}`,
+          abi: StoryLineABI,
+          functionName: 'totalSupply',
           account: profileAddress
-        }) as StoryPrompt[];
+        });
 
+        console.log("story prompts", storyPrompts);
+
+        const tokenIds: `0x${string}`[] = [];
+        const dataKeys: string[] = [];
+        for (let i = 1; i <= Number(storyPrompts); i++) {
+          // toString(16) gives the hex without leading zeros
+          const hex = i.toString(16).padStart(64, "0");
+          tokenIds.push(`0x${hex}`);
+          dataKeys.push("0x9afb95cacc9f95858ec44aa8c3b685511002e30ae54415823f406128b85b238e");
+        }
+
+        const storyLinesContract = existingStories[existingStories.length - 1].replace("0x000000000000000000000000", "0x") as `0x${string}`;
+        const storyLines = await publicClient.readContract({
+          address: storyLinesContract,
+          abi: StoryLineABI,
+          functionName: 'getDataBatchForTokenIds',
+          args: [tokenIds, dataKeys],
+          account: profileAddress
+        }) as string[];
+
+        const provider = new ethers.JsonRpcProvider(network.rpcUrl, chainId, {
+          staticNetwork: ethers.Network.from(chainId),
+        });
+
+        const myErc725 = new ERC725(lsp4MetadataSchema, storyLinesContract, provider);
+
+        console.log("story lines", storyLines);
         // Convert from contract format to component format
-        const formattedStoryHistory = storyData.map(item => ({
-          prompt: item.prompt,
-          author: item.author,
-          timestamp: Number(item.timestamp),
-          selected: item.selected
-        }));
+        const formattedStoryHistory = [];
+        for (const item of storyLines) {
+          const decoded = myErc725.decodeData({
+            // @ts-ignore
+            keyName: 'LSP4Metadata',
+            value: item,
+          });
+          let metadataIpfsUrl = network.ipfsGateway + decoded.value.url.replace("ipfs://", "");
+          const lsp4Metadata = await fetchLSP4Metadata(metadataIpfsUrl);
+          formattedStoryHistory.push(({
+            prompt: lsp4Metadata.LSP4Metadata.description,
+            author: "0x075A1fbFDEd953B50597E3Ef726209eaB93b9C11", //TODO
+            timestamp: Number(lsp4Metadata.LSP4Metadata.name.replace("Story ", "")),
+            selected: false,
+          }));
+        }
 
         setStoryHistory(formattedStoryHistory);
         setStoryStarted(true);
@@ -144,7 +203,7 @@ const StoryAdventure = () => {
     }
   };
  
-const generateNextOptions = async () => {
+  const generateNextOptions = async () => {
   try {
     setLoading(true);
     // revoke previous blob URLs
@@ -208,23 +267,34 @@ const generateNextOptions = async () => {
     try {
       setTransactionPending(true);
 
-      // Call contract to start a new story
-      const hash = await client.writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: StoryAdventureABI,
-        functionName: "startNewStory",
-        args: [initialPromptInput.trim()],
-        account: connectedAddress,
-        chain: client.chain
-      });
+      const initialPromptImage= await generatePromptImage([initialPromptInput]);
+      const timestamp = Math.floor(Date.now() / 1000);
+      const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, initialPromptImage);
 
-      await publicClient.waitForTransactionReceipt({ hash });
-
-      // Update local state with new story prompt
+      await mintStory(
+        client,
+        publicClient,
+        connectedAddress!,
+        network.contractAddress,
+        network.ipfsGateway,
+        {
+          title: `Story ${timestamp}`,
+          description: initialPromptInput,
+          urls: [],
+          icon: initialPromptImage,
+          iconWidth: 1024,
+          iconHeight: 1024,
+          iconIpfsHash: ipfsHash,
+          imageIpfsHash: ipfsHash,
+          image: initialPromptImage,
+          imageHeight: 1024,
+          imageWidth: 1024,
+        }
+      )
       const newStoryPrompt = {
         prompt: initialPromptInput.trim(),
         author: profileAddress,
-        timestamp: Math.floor(Date.now() / 1000),
+        timestamp: timestamp,
         selected: true
       };
 
