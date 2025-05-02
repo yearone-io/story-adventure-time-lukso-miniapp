@@ -165,11 +165,11 @@ const StoryAdventure = () => {
         const formattedStoryHistory = [];
         for (const item of storyLines) {
           const decoded = myErc725.decodeData({
-            // @ts-ignore
+            // @ts-expect-error
             keyName: 'LSP4Metadata',
             value: item,
           });
-          let metadataIpfsUrl = network.ipfsGateway + decoded.value.url.replace("ipfs://", "");
+          const metadataIpfsUrl = network.ipfsGateway + decoded.value.url.replace("ipfs://", "");
           const lsp4Metadata = await fetchLSP4Metadata(metadataIpfsUrl);
           formattedStoryHistory.push(({
             prompt: lsp4Metadata.LSP4Metadata.description,
