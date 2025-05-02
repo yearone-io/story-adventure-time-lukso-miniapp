@@ -168,7 +168,7 @@ const StoryAdventure = () => {
 
       for (let i = 0; i < options.length; i++) {
         console.log(`Generating image for option ${i+1}...`);
-        const blob = await generatePromptImage([...promptHistory, options[i]]);
+        const blob = await generatePromptImage([options[i]]);
         console.log('Blob received:', blob.size, blob.type);
         if (blob && blob.size > 0) {
           const pngBlob = new Blob([blob], { type: 'image/png' });
@@ -357,6 +357,8 @@ const StoryAdventure = () => {
     return currentOptions.map((option, index) => (
       <div key={index} className="p-1 hover:shadow-lg">
         <div className="bg-gray-900 rounded-lg p-3 flex flex-col h-full">
+          {/* <div className='flex'>  */}
+          <p className="text-white mb-2">{option}</p>
           <div className="mb-3 h-48 overflow-hidden rounded-lg">
             {currentImageData[index] ? (
               <img
@@ -370,8 +372,8 @@ const StoryAdventure = () => {
             ) : (
               <div className="w-full h-full bg-gray-800 flex items-center justify-center">Loading image...</div>
             )}
+          {/* </div> */}
           </div>
-          <p className="text-white mb-2">{option}</p>
           <button onClick={() => selectStoryOption(index)} disabled={transactionPending} className="bg-purple-600 text-white py-2 rounded">
             Choose This Path
           </button>
