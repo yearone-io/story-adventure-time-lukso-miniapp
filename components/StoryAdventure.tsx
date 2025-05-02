@@ -27,7 +27,7 @@ const StoryAdventure = () => {
   const [loading, setLoading] = useState(false);
   const [storyHistory, setStoryHistory] = useState<StoryPrompt[]>([]);
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
-  const [currentImageData, setCurrentImageData] = useState<string[]>([]); // Using data URLs instead of blob URLs
+  const [currentImageData, setCurrentImageData] = useState<string[]>([]);
   const [initialPromptInput, setInitialPromptInput] = useState('');
   const [storyStarted, setStoryStarted] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
