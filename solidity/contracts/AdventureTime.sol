@@ -8,6 +8,7 @@ import {LSP8Burnable} from "@lukso/lsp8-contracts/contracts/extensions/LSP8Burna
 import {_LSP4_TOKEN_TYPE_COLLECTION, _LSP4_METADATA_KEY, _LSP4_CREATORS_ARRAY_KEY, _LSP4_CREATORS_MAP_KEY_PREFIX} from "@lukso/lsp-smart-contracts/contracts/LSP4DigitalAssetMetadata/LSP4Constants.sol";
 import {LSP8Enumerable} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/extensions/LSP8Enumerable.sol";
 import {_LSP8_TOKENID_FORMAT_ADDRESS} from "@lukso/lsp-smart-contracts/contracts/LSP8IdentifiableDigitalAsset/LSP8Constants.sol";
+import "hardhat/console.sol";
 
 contract AdventureTime is LSP8Enumerable, LSP8Burnable {
     event StorylineCreated(string storyName, address storylineAddress, address vibeMaster);
@@ -47,22 +48,27 @@ contract AdventureTime is LSP8Enumerable, LSP8Burnable {
         string memory storylineName,
         string memory storylineSymbol,
         address vibeMaster,
+        bool isFollowerRestrictionEnabled,
         bytes memory lsp4MetadataURIOfStoryline,
-        bytes memory lsp4MetadataURIOfStartingPrompt
+        bytes memory lsp4MetadataURIOfStartingPrompt,
+        address followerSystemContract
     ) public {
         address storylineAddress = AdventureTimeHelpers.deployStoryline(
             storylineName,
             storylineSymbol,
             vibeMaster,
-            lsp4MetadataURIOfStoryline
+            isFollowerRestrictionEnabled,
+            lsp4MetadataURIOfStoryline,
+            lsp4MetadataURIOfStartingPrompt,
+            followerSystemContract
         );
 
         // Emit the event with the address of the newly deployed contract
         emit StorylineCreated(storylineName, storylineAddress, vibeMaster);
 
+        console.log("Storyline minted by Adventure Time");
+        console.logBytes32(bytes32(uint256(uint160(storylineAddress))));
         _mint(vibeMaster, bytes32(uint256(uint160(storylineAddress))), true, "");
-        // TODO: we NEED to also mint the first prompt in the storyline using the new address
-        // use lsp4MetadataURIOfStartingPrompt when minting (Storyline(address).mint)
     }
 
     function _beforeTokenTransfer(

@@ -20,12 +20,16 @@ const config: HardhatUserConfig = {
       },
       viaIR: true,
     },
-  },  contractSizer: {
-      alphaSort: true,
-      runOnCompile: true,
-      disambiguatePaths: false,
-    },
-
+  },
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6",
+  },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
+    disambiguatePaths: false,
+  },
   networks: {
      luksoTestnet: {
        url: "https://rpc.testnet.lukso.network",

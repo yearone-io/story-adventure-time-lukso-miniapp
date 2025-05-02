@@ -7,13 +7,19 @@ library AdventureTimeHelpers {
         string memory storylineName,
         string memory storylineSymbol,
         address curator,
-        bytes memory lsp4MetadataURIOfStoryline
+        bool isFollowerRestrictionEnabled,
+        bytes memory lsp4MetadataURIOfStoryline,
+        bytes memory lsp4MetadataURIOfStartingPrompt,
+        address followerSystemContract
     ) external returns (address) {
         Storyline storylineAddress = new Storyline(
             storylineName,
             storylineSymbol,
             curator,
-            lsp4MetadataURIOfStoryline
+            isFollowerRestrictionEnabled,
+            lsp4MetadataURIOfStoryline,
+            lsp4MetadataURIOfStartingPrompt,
+            followerSystemContract
         );
         return address(storylineAddress);
     }
