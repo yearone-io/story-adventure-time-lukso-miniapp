@@ -4,7 +4,7 @@ export async function fetchImageBytes(
   ipfsGateway: string,
   ipfsUrl: string
 ): Promise<Uint8Array> {
-  const imageUrl = `${ipfsGateway}/${ipfsUrl.replace('ipfs://', '')}`;
+  const imageUrl = `${ipfsGateway}${ipfsUrl.replace('ipfs://', '')}`;
   const response = await fetch(imageUrl);
   if (!response.ok) {
     throw new Error(`Failed to fetch image from ${imageUrl}`);
