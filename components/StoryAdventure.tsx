@@ -143,53 +143,55 @@ const StoryAdventure = () => {
       setLoading(false);
     }
   };
+ 
+const generateNextOptions = async () => {
+  try {
+    setLoading(true);
+    // revoke previous blob URLs
+    blobUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+    blobUrlsRef.current = [];
+    setCurrentImageData([]);
 
-  // Convert a Blob to a base64 data URL
-  const blobToDataURL = (blob) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+    const promptHistory = storyHistory.map(i => i.prompt);
+    const options = await generateStoryOptions(promptHistory);
+    
+    console.log('Generating images for all options in parallel...');
+    
+    // Create an array of promises for parallel image generation
+    const imagePromises = options.map((option, i) => {
+      return generatePromptImage([option])
+        .then(blob => {
+          console.log(`Received blob for option ${i+1}:`, blob.size, blob.type);
+          if (blob && blob.size > 0) {
+            const pngBlob = new Blob([blob], { type: 'image/png' });
+            const url = URL.createObjectURL(pngBlob);
+            console.log('Created blob URL:', url);
+            return url;
+          } else {
+            console.error(`Invalid blob for option ${i+1}`);
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
+          }
+        })
+        .catch(error => {
+          console.error(`Error generating image for option ${i+1}:`, error);
+          return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
+        });
     });
-  };
-
-  const generateNextOptions = async () => {
-    try {
-      setLoading(true);
-      // revoke previous blob URLs
-      blobUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
-      blobUrlsRef.current = [];
-      setCurrentImageData([]);
-
-      const promptHistory = storyHistory.map(i => i.prompt);
-      const options = await generateStoryOptions(promptHistory);
-      const imageUrls: string[] = [];
-
-      for (let i = 0; i < options.length; i++) {
-        console.log(`Generating image for option ${i+1}...`);
-        const blob = await generatePromptImage([options[i]]);
-        console.log('Blob received:', blob.size, blob.type);
-        if (blob && blob.size > 0) {
-          const pngBlob = new Blob([blob], { type: 'image/png' });
-          const url = URL.createObjectURL(pngBlob);
-          console.log('Created blob URL:', url);
-          imageUrls.push(url);
-          blobUrlsRef.current.push(url);
-        } else {
-          console.error(`Invalid blob for option ${i+1}`);
-          imageUrls.push("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E");
-        }
-      }
-
-      setCurrentOptions(options);
-      setCurrentImageData(imageUrls);
-    } catch (error) {
-      console.error('Error generating options:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    
+    // Wait for all image generation promises to resolve
+    const imageUrls = await Promise.all(imagePromises);
+    
+    // Store the generated blob URLs for cleanup later
+    blobUrlsRef.current = imageUrls.filter(url => url.startsWith('blob:'));
+    
+    setCurrentOptions(options);
+    setCurrentImageData(imageUrls);
+  } catch (error) {
+    console.error('Error generating options:', error);
+  } finally {
+    setLoading(false);
+  }
+};
  
 
   const startNewStory = async () => {
@@ -354,15 +356,19 @@ const StoryAdventure = () => {
     if (optionSelectionLoading) {
       return <div className="col-span-3 flex flex-col items-center py-8">Recording choice...</div>;
     }
+    
     return currentOptions.map((option, index) => (
       <div key={index} className="p-1 hover:shadow-lg">
-        <div className="bg-gray-900 rounded-lg p-3 flex flex-col h-full">
-          <div className="flex justify-between items-start mb-3 gap-4">
-            {/* Text content on the left */}
-            <p className="text-white flex-1">{option}</p>
+        <div className="bg-gray-900 rounded-lg p-4 flex flex-col h-full">
+          {/* Flex container for text and image */}
+          <div className="flex flex-row items-start space-x-3 mb-4">
+            {/* Text content - ensure it takes most of the space */}
+            <div className="flex-grow">
+              <p className="text-white">{option}</p>
+            </div>
             
-            {/* Image on the right */}
-            <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+            {/* Image container - fixed size */}
+            <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
               {currentImageData[index] ? (
                 <img
                   src={currentImageData[index]}
@@ -378,6 +384,7 @@ const StoryAdventure = () => {
             </div>
           </div>
           
+          {/* Button below the text/image row */}
           <button 
             onClick={() => selectStoryOption(index)} 
             disabled={transactionPending} 
@@ -389,7 +396,6 @@ const StoryAdventure = () => {
       </div>
     ));
   };
-
 
   if(!profileAddress) {
     //return an error message, as this can only be used in a Lukso mini app
