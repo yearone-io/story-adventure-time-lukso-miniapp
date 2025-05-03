@@ -109,9 +109,8 @@ const StoryAdventure = () => {
       setLoading(true);
       console.log("profile address", profileAddress);
 
-      if (!CONTRACT_ADDRESS) {
-        console.warn('Contract not available');
-        setLoading(false);
+      if (!CONTRACT_ADDRESS || !profileAddress) {
+        console.warn('Loading mini-app data');
         return;
       }
 
