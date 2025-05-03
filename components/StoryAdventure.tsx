@@ -169,7 +169,7 @@ const StoryAdventure = () => {
           const lsp4Metadata = await fetchLSP4Metadata(metadataIpfsUrl);
           formattedStoryHistory.push(({
             prompt: lsp4Metadata.LSP4Metadata.description,
-            author: "0x075A1fbFDEd953B50597E3Ef726209eaB93b9C11", //TODO
+            author: connectedAddress!,
             timestamp: Number(lsp4Metadata.LSP4Metadata.name.replace("Story ", "").replace("Prompt ", "")),
             selected: false,
           }));
