@@ -2,6 +2,19 @@
 
 # dependencies
 /node_modules
+/solidity/node_modules
+# Hardhat files
+/solidity/cache
+/solidity/artifacts
+
+# TypeChain files
+/solidity/typechain
+/solidity/typechain-types
+
+# solidity-coverage files
+/solidity/coverage
+/solidity/coverage.json
+
 /.pnp
 .pnp.*
 .yarn/*
@@ -31,8 +44,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env
+.env.test
+.env.local
 
 # vercel
 .vercel

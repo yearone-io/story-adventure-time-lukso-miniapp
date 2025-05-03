@@ -1,0 +1,27 @@
+{
+  "name": "@yearone-io/adventure-time",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yearone-io/universal-assistant-protocol.git"
+  },
+  "version": "0.2.0",
+  "scripts": {
+    "build": "npx hardhat compile",
+    "test": "REPORT_GAS=true npm run build && npx hardhat test",
+    "coverage": "npx hardhat coverage",
+    "typechain": "typechain --target ethers-v6 --out-dir typechain-types ./node_modules/@lukso/lsp-smart-contracts/artifacts/*.json",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "lint:fix": "solhint --fix 'contracts/**/*.sol'"
+  },
+  "dependencies": {
+    "@erc725/erc725.js": "^0.27.2",
+    "@lukso/lsp-smart-contracts": "^0.16.3",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.1",
+    "dotenv": "^16.3.1",
+    "hardhat": "^2.22.6",
+    "hardhat-contract-sizer": "^2.10.0",
+    "prettier": "^3.1.0",
+    "solhint": "^5.0.3"
+  }
+}
