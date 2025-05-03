@@ -2,20 +2,37 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useUpProvider } from "@/components/upProvider";
-import { getContract } from "viem";
 
 // This would be your LLM API service
 import { generatePromptImage, generateStoryOptions } from "@/services/llm-service";
 
 // Import ABI of your deployed contract
-import StoryAdventureABIFile from '../contracts/StoryAdventure.json';
+import AdventureTimeABIFile from '../contracts/AdventureTime.json';
+import StoryLineABIFile from '../contracts/StoryLineABI.json';
 import ConnectWalletExplainer from "@/components/ConnectWalletExplainer";
 import { supportedNetworks } from "@/config/networks";
 import SwitchNetworkExplainer from "@/components/SwitchNetworkExplainer";
 import StoryLine from "@/components/StoryLine";
 import { StoryPrompt } from "@/types/story";
 import { IoReload } from "react-icons/io5";
-const StoryAdventureABI = StoryAdventureABIFile.abi;
+import { mintStory, mintStoryLine } from "@/services/lsp8-service";
+import { pinFileToIPFS } from "@/services/ipfs";
+import ERC725 from '@erc725/erc725.js';
+import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
+const AdventureTimeABI = AdventureTimeABIFile;
+const StoryLineABI = StoryLineABIFile;
+import { ethers } from "ethers";
+import { fetchLSP4Metadata } from "@/services/lsp4-service";
+
+const lsp4MetadataSchema = [
+  {
+    name: 'LSP4Metadata',
+    key: ERC725YDataKeys.LSP4['LSP4Metadata'],
+    keyType: 'Singleton',
+    valueType: 'bytes',
+    valueContent: 'VerifiableURI',
+  },
+];
 
 const StoryAdventure = () => {
   const { client, publicClient, accounts, contextAccounts, walletConnected, chainId, profileChainId } =
@@ -28,6 +45,7 @@ const StoryAdventure = () => {
   const [storyHistory, setStoryHistory] = useState<StoryPrompt[]>([]);
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [currentImageData, setCurrentImageData] = useState<string[]>([]);
+  const [imageBlobs, setImageBlobs] = useState<Blob[]>([]);
   const [initialPromptInput, setInitialPromptInput] = useState('');
   const [storyStarted, setStoryStarted] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
@@ -76,17 +94,6 @@ const StoryAdventure = () => {
       };
     }, []);
 
-  // Create contract instance when client is available
-  const getStoryContract = () => {
-    if (!client || !CONTRACT_ADDRESS) return null;
-
-    return getContract({
-      address: CONTRACT_ADDRESS,
-      abi: StoryAdventureABI,
-      client: publicClient,
-    });
-  };
-
   useEffect(() => {
     loadStoryHistory();
   }, [profileAddress, publicClient]);
@@ -100,38 +107,73 @@ const StoryAdventure = () => {
   const loadStoryHistory = async () => {
     try {
       setLoading(true);
+      console.log("profile address", profileAddress);
 
-      const contract = getStoryContract();
-      if (!contract) {
-        console.error('Contract not available');
+      if (!CONTRACT_ADDRESS) {
+        console.warn('Contract not available');
         setLoading(false);
         return;
       }
 
       // Check if user has a story
-      const hasStory = await publicClient.readContract({
+      const existingStories = await publicClient.readContract({
         address: CONTRACT_ADDRESS,
-        abi: StoryAdventureABI,
-        functionName: 'hasStory',
+        abi: AdventureTimeABI,
+        functionName: 'tokenIdsOf',
+        args: [profileAddress],
         account: profileAddress
-      });
+      }) as string[];
 
-      if (hasStory) {
+      if (existingStories.length > 0) {
         // Get story history from the contract
-        const storyData = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: StoryAdventureABI,
-          functionName: 'getStoryHistory',
+        const storyPrompts = await publicClient.readContract({
+          address: existingStories[existingStories.length - 1].replace("0x000000000000000000000000", "0x") as `0x${string}`,
+          abi: StoryLineABI,
+          functionName: 'totalSupply',
           account: profileAddress
-        }) as StoryPrompt[];
+        });
+
+        const tokenIds: `0x${string}`[] = [];
+        const dataKeys: string[] = [];
+        for (let i = 1; i <= Number(storyPrompts); i++) {
+          // toString(16) gives the hex without leading zeros
+          const hex = i.toString(16).padStart(64, "0");
+          tokenIds.push(`0x${hex}`);
+          dataKeys.push("0x9afb95cacc9f95858ec44aa8c3b685511002e30ae54415823f406128b85b238e");
+        }
+
+        const storyLinesContract = existingStories[existingStories.length - 1].replace("0x000000000000000000000000", "0x") as `0x${string}`;
+        const storyLines = await publicClient.readContract({
+          address: storyLinesContract,
+          abi: StoryLineABI,
+          functionName: 'getDataBatchForTokenIds',
+          args: [tokenIds, dataKeys],
+          account: profileAddress
+        }) as string[];
+
+        const provider = new ethers.JsonRpcProvider(network.rpcUrl, chainId, {
+          staticNetwork: ethers.Network.from(chainId),
+        });
+
+        const myErc725 = new ERC725(lsp4MetadataSchema, storyLinesContract, provider);
 
         // Convert from contract format to component format
-        const formattedStoryHistory = storyData.map(item => ({
-          prompt: item.prompt,
-          author: item.author,
-          timestamp: Number(item.timestamp),
-          selected: item.selected
-        }));
+        const formattedStoryHistory = [];
+        for (const item of storyLines) {
+          const decoded = myErc725.decodeData({
+            // @ts-expect-error unknown type
+            keyName: 'LSP4Metadata',
+            value: item,
+          });
+          const metadataIpfsUrl = network.ipfsGateway + decoded.value.url.replace("ipfs://", "");
+          const lsp4Metadata = await fetchLSP4Metadata(metadataIpfsUrl);
+          formattedStoryHistory.push(({
+            prompt: lsp4Metadata.LSP4Metadata.description,
+            author: "0x075A1fbFDEd953B50597E3Ef726209eaB93b9C11", //TODO
+            timestamp: Number(lsp4Metadata.LSP4Metadata.name.replace("Story ", "").replace("Prompt ", "")),
+            selected: false,
+          }));
+        }
 
         setStoryHistory(formattedStoryHistory);
         setStoryStarted(true);
@@ -143,56 +185,58 @@ const StoryAdventure = () => {
       setLoading(false);
     }
   };
- 
-const generateNextOptions = async () => {
-  try {
-    setLoading(true);
-    // revoke previous blob URLs
-    blobUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
-    blobUrlsRef.current = [];
-    setCurrentImageData([]);
 
-    const promptHistory = storyHistory.map(i => i.prompt);
-    const options = await generateStoryOptions(promptHistory);
-    
-    console.log('Generating images for all options in parallel...');
-    
-    // Create an array of promises for parallel image generation
-    const imagePromises = options.map((option, i) => {
-      return generatePromptImage([option])
-        .then(blob => {
-          console.log(`Received blob for option ${i+1}:`, blob.size, blob.type);
-          if (blob && blob.size > 0) {
-            const pngBlob = new Blob([blob], { type: 'image/png' });
-            const url = URL.createObjectURL(pngBlob);
-            console.log('Created blob URL:', url);
-            return url;
-          } else {
-            console.error(`Invalid blob for option ${i+1}`);
+  const generateNextOptions = async () => {
+    try {
+      setLoading(true);
+      // revoke previous blob URLs
+      blobUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+      blobUrlsRef.current = [];
+      setCurrentImageData([]);
+
+      const promptHistory = storyHistory.map(i => i.prompt);
+      const options = await generateStoryOptions(promptHistory);
+
+      console.log("options", options);
+
+      // Create an array of promises for parallel image generation
+      const imageBlobs: Blob[] = [];
+      const imagePromises = options.map((option, i) => {
+        return generatePromptImage([option])
+          .then(blob => {
+            if (blob && blob.size > 0) {
+              const pngBlob = new Blob([blob], { type: 'image/png' });
+              const url = URL.createObjectURL(pngBlob);
+              console.log('Created blob URL:', url);
+              imageBlobs.push(blob);
+              return url;
+            } else {
+              console.error(`Invalid blob for option ${i+1}`);
+              return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
+            }
+          })
+          .catch(error => {
+            console.error(`Error generating image for option ${i+1}:`, error);
             return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
-          }
-        })
-        .catch(error => {
-          console.error(`Error generating image for option ${i+1}:`, error);
-          return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
-        });
-    });
-    
-    // Wait for all image generation promises to resolve
-    const imageUrls = await Promise.all(imagePromises);
-    
-    // Store the generated blob URLs for cleanup later
-    blobUrlsRef.current = imageUrls.filter(url => url.startsWith('blob:'));
-    
-    setCurrentOptions(options);
-    setCurrentImageData(imageUrls);
-  } catch (error) {
-    console.error('Error generating options:', error);
-  } finally {
-    setLoading(false);
-  }
-};
- 
+          });
+      });
+
+      setImageBlobs(imageBlobs);
+
+      // Wait for all image generation promises to resolve
+      const imageUrls = await Promise.all(imagePromises);
+
+      // Store the generated blob URLs for cleanup later
+      blobUrlsRef.current = imageUrls.filter(url => url.startsWith('blob:'));
+
+      setCurrentOptions(options);
+      setCurrentImageData(imageUrls);
+    } catch (error) {
+      console.error('Error generating options:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const startNewStory = async () => {
     if (!initialPromptInput.trim() || !client || !profileAddress || !publicClient) return;
@@ -208,23 +252,32 @@ const generateNextOptions = async () => {
     try {
       setTransactionPending(true);
 
-      // Call contract to start a new story
-      const hash = await client.writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: StoryAdventureABI,
-        functionName: "startNewStory",
-        args: [initialPromptInput.trim()],
-        account: connectedAddress,
-        chain: client.chain
-      });
+      const initialPromptImage= await generatePromptImage([initialPromptInput]);
+      const timestamp = Math.floor(Date.now() / 1000);
+      const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, initialPromptImage);
 
-      await publicClient.waitForTransactionReceipt({ hash });
-
-      // Update local state with new story prompt
+      await mintStory(
+        client,
+        publicClient,
+        connectedAddress!,
+        network.contractAddress,
+        network.ipfsGateway,
+        {
+          title: `Story ${timestamp}`,
+          description: initialPromptInput,
+          urls: [],
+          iconWidth: 1024,
+          iconHeight: 1024,
+          iconIpfsHash: ipfsHash,
+          imageIpfsHash: ipfsHash,
+          imageHeight: 1024,
+          imageWidth: 1024,
+        }
+      )
       const newStoryPrompt = {
         prompt: initialPromptInput.trim(),
         author: profileAddress,
-        timestamp: Math.floor(Date.now() / 1000),
+        timestamp: timestamp,
         selected: true
       };
 
@@ -232,6 +285,10 @@ const generateNextOptions = async () => {
       setStoryStarted(true);
       setInitialPromptInput('');
       setTransactionPending(false);
+      setCurrentOptions([]);
+      setCurrentImageData([]);
+      setOptionSelectionLoading(false);
+      setLoading(false);
     } catch (error: any) {
       if (!error.message || !error.message?.includes('User rejected the request')) {
         console.error('Error starting new story:', error);
@@ -242,7 +299,8 @@ const generateNextOptions = async () => {
 
   const selectStoryOption = async (optionIndex: number) => {
     const optionText = currentOptions[optionIndex];
-    if (!client || !profileAddress || !optionText) return;
+    const optionImage = imageBlobs[optionIndex];
+    if (!client || !profileAddress || !optionText || !optionImage) return;
 
     if(!walletConnected) {
       //prompt to connect
@@ -261,17 +319,36 @@ const generateNextOptions = async () => {
       setTransactionPending(true);
       setOptionSelectionLoading(true);
 
-      // Call contract to add a new story prompt
-      const hash = await client.writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: StoryAdventureABI,
-        functionName: "addStoryPrompt",
-        args: [optionText, profileAddress],
-        account: connectedAddress,
-        chain: client.chain
-      });
+      const timestamp = Math.floor(Date.now() / 1000);
+      const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, optionImage);
 
-      await publicClient.waitForTransactionReceipt({ hash });
+      // Call contract to add a new story prompt
+      const existingStories = await publicClient.readContract({
+        address: CONTRACT_ADDRESS,
+        abi: AdventureTimeABI,
+        functionName: 'tokenIdsOf',
+        args: [profileAddress],
+        account: profileAddress
+      }) as string[];
+
+      await mintStoryLine(
+        client,
+        publicClient,
+        connectedAddress!,
+        existingStories[existingStories.length - 1].replace("0x000000000000000000000000", "0x") as `0x${string}`,
+        network.ipfsGateway,
+        {
+          title: `Prompt ${timestamp}`,
+          description: optionText,
+          urls: [],
+          iconWidth: 1024,
+          iconHeight: 1024,
+          iconIpfsHash: ipfsHash,
+          imageIpfsHash: ipfsHash,
+          imageHeight: 1024,
+          imageWidth: 1024,
+        }
+      )
 
       // Update local state with new story prompt
       const newStoryPrompt = {
@@ -283,13 +360,14 @@ const generateNextOptions = async () => {
 
       // Update local state
       setStoryHistory([...storyHistory, newStoryPrompt]);
-      
+
       // Clear options
       setCurrentOptions([]);
       setCurrentImageData([]);
-      
+
       setTransactionPending(false);
       setOptionSelectionLoading(false);
+      await generateNextOptions();
     } catch (error: any) {
       if (!error.message || !error.message?.includes('User rejected the request')) {
         console.error('Error selecting story option:', error);
@@ -316,31 +394,7 @@ const generateNextOptions = async () => {
     }
 
     try {
-      setLoading(true);
-      setTransactionPending(true);
-      setOptionSelectionLoading(true);
-
-      // Call contract to add a new story prompt
-      const hash = await client.writeContract({
-        address: CONTRACT_ADDRESS,
-        abi: StoryAdventureABI,
-        functionName: "deleteStory",
-        args: [],
-        account: connectedAddress,
-        chain: client.chain
-      });
-
-      await publicClient.waitForTransactionReceipt({ hash });
-
-      // Update local state
-      setStoryHistory([]);
-      setCurrentOptions([]);
-      setCurrentImageData([]);
-      setTransactionPending(false);
-      setOptionSelectionLoading(false);
-      setLoading(false);
       setStoryStarted(false);
-      setInitialPromptInput("");
     } catch (error: any) {
       if (!error.message || !error.message?.includes('User rejected the request')) {
         console.error('Error selecting story option:', error);
@@ -354,9 +408,9 @@ const generateNextOptions = async () => {
   // Render story options with enhanced styling and images
   const renderStoryOptions = () => {
     if (optionSelectionLoading) {
-      return <div className="col-span-3 flex flex-col items-center py-8">Recording choice...</div>;
+      return <div className="col-span-3 flex flex-col items-center py-8 text-white/70">Recording choice...</div>;
     }
-    
+
     return currentOptions.map((option, index) => (
       <div key={index} className="p-1 hover:shadow-lg">
         <div className="bg-gray-900 rounded-lg p-4 flex flex-col h-full">
@@ -366,7 +420,7 @@ const generateNextOptions = async () => {
             <div className="flex-grow">
               <p className="text-white">{option}</p>
             </div>
-            
+
             {/* Image container - fixed size */}
             <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
               {currentImageData[index] ? (
@@ -383,11 +437,11 @@ const generateNextOptions = async () => {
               )}
             </div>
           </div>
-          
+
           {/* Button below the text/image row */}
-          <button 
-            onClick={() => selectStoryOption(index)} 
-            disabled={transactionPending} 
+          <button
+            onClick={() => selectStoryOption(index)}
+            disabled={transactionPending}
             className="bg-purple-600 text-white py-2 rounded mt-auto"
           >
             Choose This Path
@@ -483,7 +537,7 @@ const generateNextOptions = async () => {
               Scroll down to read the story and participate in the adventure! <a target="_blank" className="font-bold underline" href="https://universal-story.netlify.app">Click here</a> to install on your profile.
             </p>
             {profileAddress === connectedAddress && (
-              <p className="text-xs p-2 text-white"><button onClick={() => resetStory()} className="font-bold underline">Click here</button> to reset your story. This will delete all the history and let you start with a fresh story line.</p>
+              <p className="text-xs p-2 text-white"><button onClick={() => resetStory()} className="font-bold underline">Click here</button> to start a new story.</p>
             )}
             <div className="space-y-8">
               {showConnectWalletTooltip && <ConnectWalletExplainer onClose={() => setShowConnectWalletTooltip(false)} />}

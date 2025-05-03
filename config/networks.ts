@@ -4,6 +4,7 @@ interface ChainInfo {
   rpcUrl: string;
   universalEverything: (address: string) => string;
   contractAddress: `0x${string}`;
+  ipfsGateway: string;
 }
 
 export const supportedNetworks: { [key: string]: ChainInfo } = {
@@ -12,13 +13,15 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     explorer: 'https://explorer.execution.mainet.lukso.network',
     universalEverything: (address: string) => `https://universaleverything.io/${address}?network=mainnet`,
     rpcUrl: 'https://42.rpc.thirdweb.com',
-    contractAddress: "0x0ca97784e61cA28feB0AEB51f14e42f33cEd0E9d"
+    contractAddress: "0x0ca97784e61cA28feB0AEB51f14e42f33cEd0E9d",
+    ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
   },
   4201: {
     name: 'LUKSO Testnet',
     explorer: 'https://explorer.execution.testnet.lukso.network',
     universalEverything: (address: string) => `https://universaleverything.io/${address}?network=testnet`,
     rpcUrl: 'https://4201.rpc.thirdweb.com',
-    contractAddress: "0xA909E48F0AC9087da360d98471218a274a04A959"
+    contractAddress: "0x8c7C764310232903dA87063d8214b43476b12F49",
+    ipfsGateway: 'https://api.universalprofile.cloud/ipfs/',
   },
 };
