@@ -355,10 +355,11 @@ const StoryAdventure = () => {
       )
 
       // Update local state with new story prompt
+      const imageURL = network.ipfsGateway + ipfsHash.replace("ipfs://", "");
       const newStoryPrompt = {
         prompt: optionText,
         author: connectedAddress!,
-        imageURL: '',
+        imageURL: imageURL,
         timestamp: Math.floor(Date.now() / 1000),
         selected: true
       };
