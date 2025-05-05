@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import '@/styles/globals.scss';
 
 export const metadata: Metadata = {
-  title: 'Universal Story',
+  title: 'Story Adventure Time',
   description: 'Collaborative AI storytelling powered by YearOne',
 };
 

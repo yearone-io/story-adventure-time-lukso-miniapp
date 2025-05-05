@@ -31,7 +31,7 @@ graph TD;
 ```mermaid
 sequenceDiagram
     participant ProfileOwner as Profile Owner
-    participant UniversalStory as Universal Story UI
+    participant UniversalStory as Story Adventure Time UI
     participant StoryContract as StoryAdventure.sol (Smart Contract)
     participant AIModel as AI Model API
     participant Visitor as Visitor

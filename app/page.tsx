@@ -54,12 +54,12 @@ function MainContent() {
           <div className="flex items-center justify-center space-x-3 mb-3">
             <img
               src="/universal-story.png"
-              alt="Universal Story Logo"
+              alt="Story Adventure Time Logo"
               className="h-12 md:h-10 object-contain"
             />
             <div>
               <h2 className="text-xl md:text-2xl font-bold text-white">
-                Universal Story
+                Story Adventure Time
               </h2>
               <p className="text-sm md:text-md font-bold text-white">
                 Collaborative Storytelling

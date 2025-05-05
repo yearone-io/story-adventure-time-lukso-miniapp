@@ -34,7 +34,7 @@ const StoryExplainer = () => {
             text-white/90
             z-20
           ">
-          <h3 className="text-lg font-semibold text-purple-300 mb-2">How Universal Story Works</h3>
+          <h3 className="text-lg font-semibold text-purple-300 mb-2">How Story Adventure Time Works</h3>
           <ul className="space-y-2 text-sm">
             <li className="flex items-start">
               <span className="text-purple-400 mr-2">•</span>
