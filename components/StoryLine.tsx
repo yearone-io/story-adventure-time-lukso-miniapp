@@ -27,6 +27,10 @@ const StoryLine = ({
 }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  // Check if there's an image available to display
+  const storyImage = item.imageURL
 
   // Format the author address (0x123...456)
   const truncateAddress = (address: string) => {
@@ -150,57 +154,75 @@ const StoryLine = ({
         ${index === total - 1 ? 'border-2 border-purple-500' : ''}
       `}
     >
-      <div className="flex items-start gap-3">
-        <a
-          href={explorerUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={item.author}
-          className="flex-shrink-0 mt-1"
-        >
-          {!isLoading && avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={truncateAddress(item.author)}
-              className="w-8 h-8 rounded-full object-cover"
-              onError={() => setAvatarUrl(null)} // Reset on error to show fallback
-            />
-          ) : (
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${isLoading ? 'animate-pulse' : ''}`}
-              style={{ backgroundColor: generateAvatarColor(item.author) }}
-            >
-              {item.author.substring(2, 4)}
+      <div className="flex flex-col space-y-4">
+        {/* Profile and content */}
+        <div className="flex items-start gap-3">
+          <a
+            href={explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={item.author}
+            className="flex-shrink-0 mt-1"
+          >
+            {!isLoading && avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={truncateAddress(item.author)}
+                className="w-8 h-8 rounded-full object-cover"
+                onError={() => setAvatarUrl(null)} // Reset on error to show fallback
+              />
+            ) : (
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${isLoading ? 'animate-pulse' : ''}`}
+                style={{ backgroundColor: generateAvatarColor(item.author) }}
+              >
+                {item.author.substring(2, 4)}
+              </div>
+            )}
+          </a>
+
+          {/* Content */}
+          <div className="flex-1">
+            <p className="text-white/90 italic text-base">{item.prompt}</p>
+
+            <div className="text-xs text-white/70 mt-1">
+                <span title={fullDate} className="cursor-help">
+                  {formatTimestamp(item.timestamp)}
+                </span>
             </div>
-          )}
-        </a>
-
-        {/* Content */}
-        <div className="flex-1">
-          <p className="text-white/90 italic text-base">{item.prompt}</p>
-
-          <div className="text-xs text-white/70 mt-1">
-              <span title={fullDate} className="cursor-help">
-                {formatTimestamp(item.timestamp)}
-              </span>
           </div>
         </div>
+
+        {/* Story Image - Only display if available */}
+        {storyImage && !imageError && (
+          <div className="mt-3 flex justify-center">
+            <div className="rounded-lg overflow-hidden max-w-full w-full h-auto">
+              <img 
+                src={storyImage} 
+                alt={`Story image for prompt ${index + 1}`}
+                className="w-full h-auto object-cover"
+                onError={() => setImageError(true)}
+                loading="lazy"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-    {index < total - 1 && (
-      <div className="absolute top-1/2 right-[-30px] transform -translate-y-1/2 rotate-90">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6 text-purple-400 animate-pulse"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-        </svg>
-      </div>
-    )}
-  </div>
+      {index < total - 1 && (
+        <div className="absolute top-1/2 right-[-30px] transform -translate-y-1/2 rotate-90">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-purple-400 animate-pulse"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+      )}
+    </div>
   );
 };
 

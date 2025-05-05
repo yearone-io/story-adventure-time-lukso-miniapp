@@ -166,14 +166,19 @@ const StoryAdventure = () => {
           });
           const metadataIpfsUrl = network.ipfsGateway + decoded.value.url.replace("ipfs://", "");
           const lsp4Metadata = await fetchLSP4Metadata(metadataIpfsUrl);
+          const ipfsImage = lsp4Metadata.LSP4Metadata.images[0][0].url;
+          const imageURL = network.ipfsGateway + ipfsImage.replace("ipfs://", "");
           formattedStoryHistory.push(({
             prompt: lsp4Metadata.LSP4Metadata.description,
+            imageURL: imageURL,
             author: "0x075A1fbFDEd953B50597E3Ef726209eaB93b9C11", //TODO
             timestamp: Number(lsp4Metadata.LSP4Metadata.name.replace("Story ", "").replace("Prompt ", "")),
             selected: false,
+
           }));
         }
 
+        // todo lint
         setStoryHistory(formattedStoryHistory);
         setStoryStarted(true);
       }
@@ -276,8 +281,9 @@ const StoryAdventure = () => {
       const newStoryPrompt = {
         prompt: initialPromptInput.trim(),
         author: profileAddress,
+        imageURL: "", // todo
         timestamp: timestamp,
-        selected: true
+        selected: true,
       };
 
       setStoryHistory([newStoryPrompt]);
@@ -353,6 +359,7 @@ const StoryAdventure = () => {
       const newStoryPrompt = {
         prompt: optionText,
         author: connectedAddress!,
+        imageURL: '', // todo
         timestamp: Math.floor(Date.now() / 1000),
         selected: true
       };
