@@ -83,7 +83,7 @@ const StoryAdventure = () => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText("https://universalstory.yearone.io");
+      await navigator.clipboard.writeText("https://storyadventuretime.yearone.io");
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -488,7 +488,7 @@ const StoryAdventure = () => {
           This feature can only be used in a Lukso mini app.
           Get started by adding this URL to your Univeral Profile grid.
         </p>
-        <span className="text-lg font-bold text-white truncate flex-1">https://universalstory.yearone.io</span>
+        <span className="text-lg font-bold text-white truncate flex-1">https://storyadventuretime.yearone.io</span>
         <div className="flex items-center justify-center space-x-2 p-3 rounded-md max-w-md mx-auto">
           <button
             onClick={handleCopy}
@@ -578,7 +578,7 @@ const StoryAdventure = () => {
         ) : (
           <div>
             <p className="text-xs p-2 text-white">
-              Scroll down to read the story and participate in the adventure! <a target="_blank" className="font-bold underline" href="https://universalstory.yearone.io">Click here</a> to install on your profile.
+              Scroll down to read the story and participate in the adventure! <a target="_blank" className="font-bold underline" href="https://storyadventuretime.yearone.io">Click here</a> to install on your profile.
             </p>
             {profileAddress === connectedAddress && (
               <p className="text-xs p-2 text-white"><button onClick={() => resetStory()} className="font-bold underline">Click here</button> to start a new story.</p>

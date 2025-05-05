@@ -53,7 +53,7 @@ function MainContent() {
         >
           <div className="flex items-center justify-center space-x-3 mb-3">
             <img
-              src="/universal-story.png"
+              src="/story-adventure-time.png"
               alt="Story Adventure Time Logo"
               className="h-12 md:h-10 object-contain"
             />

@@ -54,8 +54,8 @@ sequenceDiagram
 
 ### Installation
 ```sh
-git clone https://github.com/democrazyfi/universal-story-lukso-miniapp
-cd universal-story-lukso-miniapp
+git clone https://github.com/yearone-io/story-adventure-time-lukso-miniapp
+cd story-adventure-time-lukso-miniapp
 yarn install
 ```
 

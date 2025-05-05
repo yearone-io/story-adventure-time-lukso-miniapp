@@ -2,7 +2,7 @@
   "name": "@yearone-io/adventure-time",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yearone-io/universal-assistant-protocol.git"
+    "url": "https://github.com/yearone-io/story-adventure-time-lukso-miniapp.git"
   },
   "version": "0.2.0",
   "scripts": {
