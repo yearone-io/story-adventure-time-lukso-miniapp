@@ -15,11 +15,11 @@ const getRandomDelay = (min = 1, max = 5) => {
 };
 
 const StoryLine = ({
-                     item,
-                     index,
-                     total,
-                     chainId,
-                   }: {
+  item,
+  index,
+  total,
+  chainId,
+}: {
   item: StoryPrompt;
   index: number;
   total: number;
@@ -30,7 +30,7 @@ const StoryLine = ({
   const [imageError, setImageError] = useState(false);
 
   // Check if there's an image available to display
-  const storyImage = item.imageURL
+  const storyImage = item.imageURL;
 
   // Format the author address (0x123...456)
   const truncateAddress = (address: string) => {
@@ -154,9 +154,10 @@ const StoryLine = ({
         ${index === total - 1 ? 'border-2 border-purple-500' : ''}
       `}
     >
-      <div className="flex flex-col space-y-4">
-        {/* Profile and content */}
-        <div className="flex items-start gap-3">
+      {/* Main content container with side-by-side layout */}
+      <div className="flex items-start">
+        {/* Profile + text content (left side) */}
+        <div className="flex items-start gap-3 flex-1">
           <a
             href={explorerUrl}
             target="_blank"
@@ -181,34 +182,33 @@ const StoryLine = ({
             )}
           </a>
 
-          {/* Content */}
+          {/* Text content */}
           <div className="flex-1">
             <p className="text-white/90 italic text-base">{item.prompt}</p>
 
             <div className="text-xs text-white/70 mt-1">
-                <span title={fullDate} className="cursor-help">
-                  {formatTimestamp(item.timestamp)}
-                </span>
+              <span title={fullDate} className="cursor-help">
+                {formatTimestamp(item.timestamp)}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Story Image - Only display if available */}
+        {/* Story image (right side) */}
         {storyImage && !imageError && (
-          <div className="mt-3 flex justify-center">
-            <div className="rounded-lg overflow-hidden max-w-full w-full h-auto">
-              <img 
-                src={storyImage} 
-                alt={`Story image for prompt ${index + 1}`}
-                className="w-full h-auto object-cover"
-                onError={() => setImageError(true)}
-                loading="lazy"
-              />
-            </div>
+          <div className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden ml-3">
+            <img 
+              src={storyImage}
+              alt={`Story image for prompt ${index + 1}`}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+              loading="lazy"
+            />
           </div>
         )}
       </div>
 
+      {/* Navigation arrow for story flow */}
       {index < total - 1 && (
         <div className="absolute top-1/2 right-[-30px] transform -translate-y-1/2 rotate-90">
           <svg
