@@ -45,6 +45,8 @@ const StoryAdventure = () => {
   const [storyHistory, setStoryHistory] = useState<StoryPrompt[]>([]);
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [currentImageData, setCurrentImageData] = useState<string[]>([]);
+  const [newStoryImage, setNewStoryImage] = useState<string>();
+  const [createError, setCreateError] = useState<string>();
   const [imageBlobs, setImageBlobs] = useState<Blob[]>([]);
   const [initialPromptInput, setInitialPromptInput] = useState('');
   const [storyStarted, setStoryStarted] = useState(false);
@@ -81,7 +83,7 @@ const StoryAdventure = () => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText("https://universal-story.netlify.app/");
+      await navigator.clipboard.writeText("https://universalstory.yearone.io");
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -169,11 +171,15 @@ const StoryAdventure = () => {
           const attributes = lsp4Metadata.LSP4Metadata.attributes as { key: string, value: string }[];
           const author = attributes.filter(attribute =>  attribute.key === "author")[0].value;
           const timestamp = attributes.filter(attribute =>  attribute.key === "createdAt")[0].value;
+          const ipfsImage = lsp4Metadata?.LSP4Metadata?.images?.[0]?.[0]?.url ?? '';
+          const imageURL = ipfsImage ? network.ipfsGateway + ipfsImage.replace("ipfs://", "") : '';
           formattedStoryHistory.push(({
             prompt: lsp4Metadata.LSP4Metadata.description,
+            imageURL: imageURL,
             author: author,
             timestamp: Number(timestamp),
             selected: false,
+
           }));
         }
 
@@ -198,12 +204,20 @@ const StoryAdventure = () => {
 
       const promptHistory = storyHistory.map(i => i.prompt);
       const options = await generateStoryOptions(promptHistory);
+      setCurrentOptions(options);
 
-      console.log("options", options);
 
-      // Create an array of promises for parallel image generation
+    } catch (error) {
+      console.error('Error generating options:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchImages = async () => {
       const imageBlobs: Blob[] = [];
-      const imagePromises = options.map((option, i) => {
+      const imagePromises = currentOptions.map((option, i) => {
         return generatePromptImage([option])
           .then(blob => {
             if (blob && blob.size > 0) {
@@ -213,32 +227,27 @@ const StoryAdventure = () => {
               imageBlobs.push(blob);
               return url;
             } else {
-              console.error(`Invalid blob for option ${i+1}`);
+              console.error(`Invalid blob for option ${i + 1}`);
               return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
             }
           })
           .catch(error => {
-            console.error(`Error generating image for option ${i+1}:`, error);
+            console.error(`Error generating image for option ${i + 1}:`, error);
             return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Ctext%3EImage unavailable%3C/text%3E%3C/svg%3E";
           });
+
       });
 
       setImageBlobs(imageBlobs);
-
-      // Wait for all image generation promises to resolve
       const imageUrls = await Promise.all(imagePromises);
-
-      // Store the generated blob URLs for cleanup later
       blobUrlsRef.current = imageUrls.filter(url => url.startsWith('blob:'));
-
-      setCurrentOptions(options);
       setCurrentImageData(imageUrls);
-    } catch (error) {
-      console.error('Error generating options:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+    if(currentOptions.length) {
+      fetchImages();
+    }
+
+  }, [currentOptions])
 
   const startNewStory = async () => {
     if (!initialPromptInput.trim() || !client || !profileAddress || !publicClient) return;
@@ -252,8 +261,12 @@ const StoryAdventure = () => {
 
     try {
       setTransactionPending(true);
+      setCreateError(undefined);
 
       const initialPromptImage= await generatePromptImage([initialPromptInput]);
+      const pngBlob = new Blob([initialPromptImage], { type: 'image/png' });
+      const imageUrl = URL.createObjectURL(pngBlob);
+      setNewStoryImage(imageUrl)
       const timestamp = Math.floor(Date.now() / 1000);
       const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, initialPromptImage);
 
@@ -287,8 +300,9 @@ const StoryAdventure = () => {
       const newStoryPrompt = {
         prompt: initialPromptInput.trim(),
         author: profileAddress,
+        imageURL: imageUrl,
         timestamp: timestamp,
-        selected: true
+        selected: true,
       };
 
       setStoryHistory([newStoryPrompt]);
@@ -302,6 +316,7 @@ const StoryAdventure = () => {
     } catch (error: any) {
       if (!error.message || !error.message?.includes('User rejected the request')) {
         console.error('Error starting new story:', error);
+        setCreateError(`Error starting new story, please try again: ${error.message}`);
       }
       setTransactionPending(false);
     }
@@ -363,9 +378,11 @@ const StoryAdventure = () => {
       )
 
       // Update local state with new story prompt
+      const imageURL = network.ipfsGateway + ipfsHash.replace("ipfs://", "");
       const newStoryPrompt = {
         prompt: optionText,
         author: connectedAddress!,
+        imageURL: imageURL,
         timestamp: Math.floor(Date.now() / 1000),
         selected: true
       };
@@ -420,7 +437,7 @@ const StoryAdventure = () => {
   // Render story options with enhanced styling and images
   const renderStoryOptions = () => {
     if (optionSelectionLoading) {
-      return <div className="col-span-3 flex flex-col items-center py-8 text-white/70">Recording choice...</div>;
+      return <div className="col-span-3 flex flex-col items-center py-8 text-white/70">Recording choice, please wait for transaction...</div>;
     }
 
     return currentOptions.map((option, index) => (
@@ -445,7 +462,7 @@ const StoryAdventure = () => {
                   }}
                 />
               ) : (
-                <div className="w-full h-full bg-gray-800 flex items-center justify-center text-xs">Loading...</div>
+                <div className="w-full h-full text-white bg-gray-800 flex items-center justify-center text-xs">Loading...</div>
               )}
             </div>
           </div>
@@ -471,8 +488,8 @@ const StoryAdventure = () => {
           This feature can only be used in a Lukso mini app.
           Get started by adding this URL to your Univeral Profile grid.
         </p>
+        <span className="text-lg font-bold text-white truncate flex-1">https://universalstory.yearone.io</span>
         <div className="flex items-center justify-center space-x-2 p-3 rounded-md max-w-md mx-auto">
-          <span className="text-lg font-bold text-white truncate flex-1">https://universal-story.netlify.app</span>
           <button
             onClick={handleCopy}
             className="
@@ -486,12 +503,23 @@ const StoryAdventure = () => {
           >
             Copy
           </button>
+          <a target={"_blank"} className="
+                bg-gradient-to-r from-purple-600 to-blue-600
+                text-white font-bold py-3 px-6
+                rounded-full
+                hover:from-purple-700 hover:to-blue-700
+                transition-all duration-300
+                disabled:opacity-50 disabled:cursor-not-allowed"
+             href="https://universaleverything.io/">Open your profile </a>
         </div>
-        <iframe width="560" height="315" src="https://www.youtube.com/embed/8a3VHrpyZSc?si=jSKFMUDLytXaE2jI"
-                title="YouTube video player" frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen></iframe>
+        <div className="flex items-center justify-center">
+          <iframe width="560" height="315" src="https://www.youtube.com/embed/8a3VHrpyZSc?si=jSKFMUDLytXaE2jI"
+                  title="YouTube video player" frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen></iframe>
+        </div>
+
       </div>
     );
   }
@@ -513,6 +541,7 @@ const StoryAdventure = () => {
             <p className="text-white/70 mb-6">
               Begin your story with an imaginative opening scene
             </p>
+            <div className="flex space-x-3 mb-3">
             <textarea
               value={initialPromptInput}
               onChange={(e) => setInitialPromptInput(e.target.value)}
@@ -528,6 +557,9 @@ const StoryAdventure = () => {
                 transition-all duration-300
               "
             />
+              <img src={newStoryImage} width={150}/>
+            </div>
+            <p>{createError}</p>
             <button
               onClick={startNewStory}
               disabled={!initialPromptInput.trim() || transactionPending}
@@ -540,13 +572,13 @@ const StoryAdventure = () => {
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              {transactionPending ? 'Saving Your Tale...' : 'Begin Adventure'}
+              {transactionPending ? 'Saving Your Tale, please wait for transaction...' : 'Begin Adventure'}
             </button>
           </div>
         ) : (
           <div>
             <p className="text-xs p-2 text-white">
-              Scroll down to read the story and participate in the adventure! <a target="_blank" className="font-bold underline" href="https://universal-story.netlify.app">Click here</a> to install on your profile.
+              Scroll down to read the story and participate in the adventure! <a target="_blank" className="font-bold underline" href="https://universalstory.yearone.io">Click here</a> to install on your profile.
             </p>
             {profileAddress === connectedAddress && (
               <p className="text-xs p-2 text-white"><button onClick={() => resetStory()} className="font-bold underline">Click here</button> to start a new story.</p>
