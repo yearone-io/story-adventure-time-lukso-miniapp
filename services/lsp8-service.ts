@@ -3,13 +3,14 @@ import { generateLSP4JSON, Image } from "@lukso/lsp-utils";
 import { hashData } from "@erc725/erc725.js/build/main/src/lib/utils";
 import { fetchImageBytes } from "@/utils/interfaceDetection";
 import { pinJsonToIpfs } from "@/services/ipfs";
-import { ERC725 } from "@erc725/erc725.js";
 import LSP4DigitalAssetSchema from '@erc725/erc725.js/schemas/LSP4DigitalAsset.json';
 import AdventureTimeContractABI from "../contracts/AdventureTime.json";
 import StoryLineABIFile from '../contracts/StoryLineABI.json';
 import UniversalProfile from '@lukso/lsp-smart-contracts/artifacts/UniversalProfile.json';
-import { createPublicClient, createWalletClient, getAddress } from "viem";
+import { createPublicClient, createWalletClient, getAddress, keccak256, toHex } from "viem";
 import { INTERFACE_IDS } from '@lukso/lsp-smart-contracts/constants';
+import lsp3ProfileSchema from '@erc725/erc725.js/schemas/LSP3ProfileMetadata.json' assert { type: 'json' };
+import { ERC725, ERC725JSONSchema } from '@erc725/erc725.js';
 import { Interface } from '@ethersproject/abi'; // For event parsing
 
 // Convert an address to its checksum format
@@ -106,7 +107,7 @@ async function createMetadata(
   );
 }
 
-export const mintStory = async (
+export const mintStoryline = async (
   client: ReturnType<typeof createWalletClient>,
   publicClient: ReturnType<typeof createPublicClient>,
   connectedAddress: `0x${string}`, // Universal Profile address
@@ -152,35 +153,57 @@ export const mintStory = async (
 
     // Wait for transaction confirmation and get receipt
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    console.log('Transaction receipt:', {
+      status: receipt.status,
+      transactionHash: receipt.transactionHash,
+      logs: receipt.logs.map(log => ({
+        address: log.address,
+        topics: log.topics,
+        data: log.data,
+      })),
+    });
 
-    // Parse the StorylineCreated event to get the lsp8Address
-    const iface = new Interface(AdventureTimeContractABI);
-    let lsp8Address: string | null = null;
+    // Calculate the StorylineCreated event topic
+    const eventSignature = 'StorylineCreated(string,address,address)';
+    const eventTopic = keccak256(toHex(eventSignature));
+    console.log('Expected StorylineCreated topic:', eventTopic);
 
-    for (const log of receipt.logs) {
-      try {
-        const parsedLog = iface.parseLog({ topics: log.topics, data: log.data });
-        if (parsedLog && parsedLog.name === 'StorylineCreated') {
-          lsp8Address = parsedLog.args.lsp8Address;
-          break;
+    // Check if any log matches the event topic
+    const matchingLogs = receipt.logs.filter(log => log.topics[0] === eventTopic);
+    console.log('Logs matching StorylineCreated topic:', matchingLogs);
+
+    // Parse the StorylineCreated event
+    let storylineAddress: string | null = null;
+
+    try {
+      const iface = new Interface(AdventureTimeContractABI);
+      for (const log of receipt.logs) {
+        try {
+          const parsedLog = iface.parseLog({ topics: log.topics, data: log.data });
+          if (parsedLog && parsedLog.name === 'StorylineCreated') {
+            storylineAddress = parsedLog.args.storylineAddress;
+            console.log('StorylineCreated:', parsedLog.args);
+            break;
+          }
+        } catch (error) {
         }
-      } catch (error) {
-        // Skip logs that can't be parsed
       }
+    } catch (error) {
+      console.error('Interface error:', error);
     }
 
-    if (!lsp8Address) {
+    if (!storylineAddress) {
       throw new Error('Failed to find StorylineCreated event in transaction receipt');
     }
 
-    return getChecksumAddress(lsp8Address);
+    return getChecksumAddress(storylineAddress);
   } catch (error) {
     console.error('Error minting story:', error);
     return null;
   }
 };
 
-export const mintStoryLine = async (
+export const mintStorylinePrompt = async (
   client: ReturnType<typeof createWalletClient>,
   publicClient: ReturnType<typeof createPublicClient>,
   connectedAddress: `0x${string}`,
@@ -231,22 +254,7 @@ export const registerLSP8Collection = async (
   try {
     // Initialize ERC725.js with LSP12 schema
     const erc725js = new ERC725(
-      [
-        {
-          name: 'LSP12IssuedAssets[]',
-          key: '0x7c8c3416d6c6f5d06a9ea84e6e4183b6f9d9d211c77e05a37d529a6141c57f23',
-          keyType: 'Array',
-          valueType: 'address',
-          valueContent: 'Address',
-        },
-        {
-          name: 'LSP12IssuedAssetsMap:<address>',
-          key: '0x74ef3c00b9b6f9c7e5d48d4f4e4dd266d279ed8e2fc78c837b79fd3609e9e8ba<address>',
-          keyType: 'Mapping',
-          valueType: '(bytes4,uint128)',
-          valueContent: '(Bytes4,Number)',
-        },
-      ],
+      lsp3ProfileSchema as ERC725JSONSchema[],
       upAddress,
       publicClient.transport, // Use Viem's transport as provider
       { ipfsGateway }

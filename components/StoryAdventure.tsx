@@ -15,7 +15,7 @@ import SwitchNetworkExplainer from "@/components/SwitchNetworkExplainer";
 import StoryLine from "@/components/StoryLine";
 import { StoryPrompt } from "@/types/story";
 import { IoReload } from "react-icons/io5";
-import { mintStory, mintStoryLine, registerLSP8Collection } from "@/services/lsp8-service";
+import { mintStoryline, mintStorylinePrompt, registerLSP8Collection } from "@/services/lsp8-service";
 import { pinFileToIPFS } from "@/services/ipfs";
 import ERC725 from '@erc725/erc725.js';
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
@@ -270,7 +270,7 @@ const StoryAdventure = () => {
       const timestamp = Math.floor(Date.now() / 1000);
       const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, initialPromptImage);
 
-      const storylineAddress = await mintStory(
+      const storylineAddress = await mintStoryline(
         client,
         publicClient,
         connectedAddress!,
@@ -356,7 +356,7 @@ const StoryAdventure = () => {
         account: profileAddress
       }) as string[];
 
-      await mintStoryLine(
+      await mintStorylinePrompt(
         client,
         publicClient,
         connectedAddress!,
