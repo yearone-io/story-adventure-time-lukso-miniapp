@@ -14,7 +14,7 @@ export const supportedNetworks: { [key: string]: ChainInfo } = {
     universalEverything: (address: string) => `https://universaleverything.io/${address}?network=mainnet`,
     rpcUrl: 'https://42.rpc.thirdweb.com',
     contractAddress: "0x4370473115FAb80b83f286b48562aC69F657E83E",
-    ipfsGateway: 'https://api.universalprofile.cloud/ipfs',
+    ipfsGateway: 'https://api.universalprofile.cloud/ipfs/',
   },
   4201: {
     name: 'LUKSO Testnet',
