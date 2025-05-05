@@ -15,7 +15,7 @@ import SwitchNetworkExplainer from "@/components/SwitchNetworkExplainer";
 import StoryLine from "@/components/StoryLine";
 import { StoryPrompt } from "@/types/story";
 import { IoReload } from "react-icons/io5";
-import { mintStory, mintStoryLine } from "@/services/lsp8-service";
+import { mintStory, mintStoryLine, registerLSP8Collection } from "@/services/lsp8-service";
 import { pinFileToIPFS } from "@/services/ipfs";
 import ERC725 from '@erc725/erc725.js';
 import { ERC725YDataKeys } from "@lukso/lsp-smart-contracts";
@@ -250,7 +250,6 @@ const StoryAdventure = () => {
       return;
     }
 
-    console.log("chainId", chainId, profileChainId);
     try {
       setTransactionPending(true);
 
@@ -258,7 +257,7 @@ const StoryAdventure = () => {
       const timestamp = Math.floor(Date.now() / 1000);
       const ipfsHash = await pinFileToIPFS(`${timestamp}.png`, initialPromptImage);
 
-      await mintStory(
+      const storylineAddress = await mintStory(
         client,
         publicClient,
         connectedAddress!,
@@ -278,6 +277,13 @@ const StoryAdventure = () => {
           createdAt: timestamp
         }
       )
+      await registerLSP8Collection(
+        client,
+        publicClient,
+        connectedAddress!,
+        storylineAddress as `0x${string}`,
+        network.ipfsGateway,
+      );
       const newStoryPrompt = {
         prompt: initialPromptInput.trim(),
         author: profileAddress,
