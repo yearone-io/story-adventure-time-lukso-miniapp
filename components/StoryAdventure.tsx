@@ -271,6 +271,8 @@ const StoryAdventure = () => {
           imageIpfsHash: ipfsHash,
           imageHeight: 1024,
           imageWidth: 1024,
+          author: profileAddress!,
+          createdAt: timestamp
         }
       )
       const newStoryPrompt = {
@@ -346,6 +348,8 @@ const StoryAdventure = () => {
           imageIpfsHash: ipfsHash,
           imageHeight: 1024,
           imageWidth: 1024,
+          author: connectedAddress!,
+          createdAt: timestamp
         }
       )
 
