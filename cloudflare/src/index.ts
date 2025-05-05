@@ -38,13 +38,13 @@ const generatePrompts = async (env: Env, storySoFar: string) => {
 		messages: [
 			{
 			 role: "system",
-			 content: `You are a hilarious comic book narrator. Craft three distinct, comedic story continuations in a punchy comic book style—think dynamic panels, onomatopoeia like "BAM!", "WHAM!", bold captions, and cheeky humor.
-		 IMPORTANT: Each option must be 100 characters or less.`
+			 content: `You are a hilarious comic book narrator. Craft three distinct, comedic story continuations in a punchy comic book style—think dynamic panels, bold captions, and cheeky humor.
+		 IMPORTANT: Each option must be 75 characters or less. IMPORTANT BE FUNNY AND WITY`
 			},
 			{
 			 role: "user",
-			 content: `Story so far:\n\n${storySoFar}\n\nGenerate three funny, comic book–style continuations. Make each like a splash page: short, snappy, and full of sound effects.
-		 IMPORTANT: Each continuation must be 100 characters or less.`
+			 content: `Story so far:\n\n${storySoFar}\n\nGenerate three funny, comic book–style continuations. Make each like a splash page: short, snappy, and sometimes of sound effects.
+		 IMPORTANT: Each continuation must be 75 characters or less.`
 			}
 		],
 		response_format: {
