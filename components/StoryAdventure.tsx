@@ -166,10 +166,13 @@ const StoryAdventure = () => {
           });
           const metadataIpfsUrl = network.ipfsGateway + decoded.value.url.replace("ipfs://", "");
           const lsp4Metadata = await fetchLSP4Metadata(metadataIpfsUrl);
+          const attributes = lsp4Metadata.LSP4Metadata.attributes as { key: string, value: string }[];
+          const author = attributes.filter(attribute =>  attribute.key === "author")[0].value;
+          const timestamp = attributes.filter(attribute =>  attribute.key === "createdAt")[0].value;
           formattedStoryHistory.push(({
             prompt: lsp4Metadata.LSP4Metadata.description,
-            author: "0x075A1fbFDEd953B50597E3Ef726209eaB93b9C11", //TODO
-            timestamp: Number(lsp4Metadata.LSP4Metadata.name.replace("Story ", "").replace("Prompt ", "")),
+            author: author,
+            timestamp: Number(timestamp),
             selected: false,
           }));
         }
