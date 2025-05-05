@@ -167,7 +167,7 @@ const StoryAdventure = () => {
           const metadataIpfsUrl = network.ipfsGateway + decoded.value.url.replace("ipfs://", "");
           const lsp4Metadata = await fetchLSP4Metadata(metadataIpfsUrl);
           const ipfsImage = lsp4Metadata?.LSP4Metadata?.images?.[0]?.[0]?.url ?? '';
-          const imageURL = network.ipfsGateway + ipfsImage.replace("ipfs://", "");
+          const imageURL = ipfsImage ? network.ipfsGateway + ipfsImage.replace("ipfs://", "") : '';
           formattedStoryHistory.push(({
             prompt: lsp4Metadata.LSP4Metadata.description,
             imageURL: imageURL,
