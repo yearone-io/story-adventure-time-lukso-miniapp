@@ -60,7 +60,18 @@ async function createMetadata(
     data.title,
     data.description,
     data.urls,
-    [],
+    [
+      {
+        key: "author",
+        value: data.author,
+        type: "string"
+      },
+      {
+        key: "createdAt",
+        value: data.createdAt.toString(),
+        type: "number"
+      }
+    ],
     {
       lsp7icons: [],
       lsp8icons: [],

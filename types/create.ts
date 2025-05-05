@@ -8,4 +8,6 @@ export interface CreateFormData {
   imageIpfsHash: string | null;
   imageHeight: number | null;
   imageWidth: number | null;
+  author: string;
+  createdAt: number;
 }
