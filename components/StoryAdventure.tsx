@@ -169,11 +169,15 @@ const StoryAdventure = () => {
           const attributes = lsp4Metadata.LSP4Metadata.attributes as { key: string, value: string }[];
           const author = attributes.filter(attribute =>  attribute.key === "author")[0].value;
           const timestamp = attributes.filter(attribute =>  attribute.key === "createdAt")[0].value;
+          const ipfsImage = lsp4Metadata?.LSP4Metadata?.images?.[0]?.[0]?.url ?? '';
+          const imageURL = ipfsImage ? network.ipfsGateway + ipfsImage.replace("ipfs://", "") : '';
           formattedStoryHistory.push(({
             prompt: lsp4Metadata.LSP4Metadata.description,
+            imageURL: imageURL,
             author: author,
             timestamp: Number(timestamp),
             selected: false,
+
           }));
         }
 
@@ -281,8 +285,9 @@ const StoryAdventure = () => {
       const newStoryPrompt = {
         prompt: initialPromptInput.trim(),
         author: profileAddress,
+        imageURL: "",
         timestamp: timestamp,
-        selected: true
+        selected: true,
       };
 
       setStoryHistory([newStoryPrompt]);
@@ -357,9 +362,11 @@ const StoryAdventure = () => {
       )
 
       // Update local state with new story prompt
+      const imageURL = network.ipfsGateway + ipfsHash.replace("ipfs://", "");
       const newStoryPrompt = {
         prompt: optionText,
         author: connectedAddress!,
+        imageURL: imageURL,
         timestamp: Math.floor(Date.now() / 1000),
         selected: true
       };
