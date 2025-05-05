@@ -482,8 +482,8 @@ const StoryAdventure = () => {
           This feature can only be used in a Lukso mini app.
           Get started by adding this URL to your Univeral Profile grid.
         </p>
+        <span className="text-lg font-bold text-white truncate flex-1">https://universalstory.yearone.io</span>
         <div className="flex items-center justify-center space-x-2 p-3 rounded-md max-w-md mx-auto">
-          <span className="text-lg font-bold text-white truncate flex-1">https://universalstory.yearone.io</span>
           <button
             onClick={handleCopy}
             className="
@@ -497,12 +497,23 @@ const StoryAdventure = () => {
           >
             Copy
           </button>
+          <a target={"_blank"} className="
+                bg-gradient-to-r from-purple-600 to-blue-600
+                text-white font-bold py-3 px-6
+                rounded-full
+                hover:from-purple-700 hover:to-blue-700
+                transition-all duration-300
+                disabled:opacity-50 disabled:cursor-not-allowed"
+             href="https://universaleverything.io/">Open your profile </a>
         </div>
-        <iframe width="560" height="315" src="https://www.youtube.com/embed/8a3VHrpyZSc?si=jSKFMUDLytXaE2jI"
-                title="YouTube video player" frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen></iframe>
+        <div className="flex items-center justify-center">
+          <iframe width="560" height="315" src="https://www.youtube.com/embed/8a3VHrpyZSc?si=jSKFMUDLytXaE2jI"
+                  title="YouTube video player" frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen></iframe>
+        </div>
+
       </div>
     );
   }
