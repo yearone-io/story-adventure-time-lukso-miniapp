@@ -37,17 +37,14 @@ const generatePrompts = async (env: Env, storySoFar: string) => {
 	const chat = {
 		messages: [
 			{
-				role: "system",
-				content:`You are a creative storytelling assistant. Your task is to generate three distinct,
-            engaging continuations for an interactive story. Each option MUST be no longer than 100 characters and
-            offer a unique direction for the story.
-            IMPORTANT: Each option must be 100 characters or less.`
+			 role: "system",
+			 content: `You are a hilarious comic book narrator. Craft three distinct, comedic story continuations in a punchy comic book style—think dynamic panels, bold captions, and cheeky humor.
+		 IMPORTANT: Each option must be 75 characters or less. IMPORTANT BE FUNNY AND WITY`
 			},
 			{
-				role: "user",
-				content: `Here's the story so far:\n\n${storySoFar}\n\nGenerate three unique and creative
-            continuations for this story. Make them interesting and different from each other.
-            IMPORTANT: Each continuation must be 100 characters or less.`
+			 role: "user",
+			 content: `Story so far:\n\n${storySoFar}\n\nGenerate three funny, comic book–style continuations. Make each like a splash page: short, snappy, and sometimes of sound effects.
+		 IMPORTANT: Each continuation must be 75 characters or less.`
 			}
 		],
 		response_format: {
@@ -73,7 +70,6 @@ const generatePrompts = async (env: Env, storySoFar: string) => {
 			}
 		}
 	};
-
 	// Call Llama 3 to generate continuations
 	// @ts-ignore
 	const response = await env.AI.run('@cf/meta/llama-3.1-8b-instruct-fast', chat);
