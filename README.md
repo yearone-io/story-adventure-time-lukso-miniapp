@@ -22,29 +22,22 @@
 ## 🏗️ Architecture diagram
 ```mermaid
 graph TD;
-    User --> UniversalStoryUI;
-    UniversalStoryUI --> StoryContract;
-    UniversalStoryUI --> AIModel;
+    User -->|Connects| Frontend[React Frontend]
+    Frontend -->|Submits Prompt| AI[AI Services<br>Llama, Stable Diffusion]
+    AI -->|Generates Prompt/Image| Frontend
+    Frontend -->|Uploads to| IPFS[The Grid<br>IPFS]
+    IPFS -->|CID| Frontend
+    Frontend -->|Calls| AdventureTime[AdventureTime<br>Contract]
+    AdventureTime -->|Deploys LSP8| LSP8[LSP8 Collection]
+    LSP8 -->|Registers to| UP[Universal Profile]
+    UP -->|Showcases via| TheGrid[The Grid UI]
+    User -->|Views on| TheGrid
+    TheGrid -->|Interacts with| Frontend
+    Frontend -->|Calls| StoryLine[StoryLine<br>Contract]
+    StoryLine -->|Mints NFT| LSP8
+    LSP8 -->|Transfers to| ContributorUP[Contributor's UP]
 ```
 
-## 🧩 Sequence Diagram
-```mermaid
-sequenceDiagram
-    participant ProfileOwner as Profile Owner
-    participant UniversalStory as Story Adventure Time UI
-    participant StoryContract as StoryAdventure.sol (Smart Contract)
-    participant AIModel as AI Model API
-    participant Visitor as Visitor
-
-    ProfileOwner ->> UniversalStory: Creates new story
-    UniversalStory ->> StoryContract: Stores base story
-    UniversalStory ->> AIModel: Requests 3 story options
-    AIModel -->> UniversalStory: Returns 3 options
-    Visitor ->> UniversalStory: Selects an option
-    UniversalStory ->> StoryContract: Stores chosen option
-    UniversalStory ->> AIModel: Requests next options
-    AIModel -->> UniversalStory: Generates next options
-```
 
 ## 🚀 Getting Started
 
